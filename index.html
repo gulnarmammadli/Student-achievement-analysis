@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Öğrenme Stilleri & Sınıf Analizi – Tek Dosya</title>
+    <title>Learning Styles & Class Analysis – Single Page</title>
 
     <!-- Tailwind CDN for professional look -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -55,11 +55,11 @@
       <header class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-semibold">
-            Öğrenme Stilleri & Sınıf Analiz
+            Learning Styles & Class Analysis
           </h1>
           <div class="muted">
-            Excel'den soruları yükle, öğrencileri test ettir, anında analizler &
-            grafikler.
+            Load questions from Excel, let students take the test, see instant
+            analyses and charts.
           </div>
         </div>
 
@@ -75,9 +75,11 @@
               id="btnLoadXLS"
               class="bg-indigo-600 text-white px-3 py-2 rounded"
             >
-              Soruları Yükle (.xlsx)
+              Load Questions (.xlsx)
             </button>
-            <span id="xlsInfo" class="tiny ml-2">Henüz soru yüklenmedi</span>
+            <span id="xlsInfo" class="tiny ml-2"
+              >No question file loaded yet</span
+            >
           </label>
 
           <button
@@ -90,7 +92,7 @@
             id="exportAll"
             class="bg-green-600 text-white px-3 py-2 rounded"
           >
-            Rapor İndir (JSON)
+            Download Report (JSON)
           </button>
         </div>
       </header>
@@ -100,42 +102,42 @@
         <!-- Left area: Student form / questions -->
         <section class="col-span-12 lg:col-span-6 space-y-4">
           <div id="studentCard" class="card">
-            <h2 class="text-lg font-medium">Öğrenci Bilgileri & Test</h2>
+            <h2 class="text-lg font-medium">Student Information & Test</h2>
             <p class="muted">
-              Ad, opsiyonel GPA girip teste başla. Sorular Excel'den otomatik
-              yüklenecek.
+              Enter name and optional GPA, then start the test. Questions will
+              be loaded automatically from Excel.
             </p>
 
             <div class="grid grid-cols-2 gap-3 mt-3">
               <input
                 id="studentName"
-                placeholder="Full Name"
+                placeholder="Student Name"
                 class="border rounded px-3 py-2"
               />
               <input
                 id="studentGPA"
-                placeholder="GPA (optional)"
+                placeholder="GPA (optional, 0–100)"
                 type="number"
-                step="0.01"
+                step="0.1"
                 min="0"
-                max="4"
+                max="100"
                 class="border rounded px-3 py-2"
               />
               <select id="studentGender" class="border rounded px-3 py-2">
-                <option value="">Gender</option>
+                <option value="">Select gender</option>
                 <option>Female</option>
                 <option>Male</option>
                 <option>Other</option>
               </select>
               <select id="courseType" class="border rounded px-3 py-2">
-                <option value="">Course Type</option>
+                <option value="">Course delivery type</option>
                 <option>Online</option>
                 <option>Hybrid</option>
                 <option>Face-to-face</option>
               </select>
               <input
                 id="weeklyHours"
-                placeholder="Weekly study hours"
+                placeholder="Weekly study hours (approx.)"
                 type="number"
                 class="border rounded px-3 py-2"
               />
@@ -152,28 +154,28 @@
                 id="startTest"
                 class="bg-emerald-600 text-white px-4 py-2 rounded"
               >
-                Teste Başla
+                Start Test
               </button>
               <button
                 id="saveStudent"
                 class="bg-indigo-600 text-white px-4 py-2 rounded"
               >
-                Kaydet (Cevap doldurunca)
+                Save (after answering)
               </button>
               <button
                 id="clearResponses"
                 class="bg-red-500 text-white px-4 py-2 rounded"
               >
-                Temizle
+                Clear Answers
               </button>
             </div>
           </div>
 
           <div id="questionsCard" class="card">
-            <h3 class="text-lg font-medium">Sorular</h3>
+            <h3 class="text-lg font-medium">Questions</h3>
             <p class="muted">
-              Excel yüklendiğinde sorular burada listelenecek. Her soru klasik
-              (tek cevap) olarak kaydedilir.
+              Once you load the Excel file, questions will be listed here. Each
+              item is treated as a single-answer question.
             </p>
             <div
               id="questionsContainer"
@@ -185,26 +187,26 @@
         <!-- Right area: Controls + Charts + Students -->
         <section class="col-span-12 lg:col-span-6 space-y-4">
           <div class="card">
-            <h3 class="text-lg font-medium">Hızlı İşlemler</h3>
+            <h3 class="text-lg font-medium">Quick Actions</h3>
             <div class="grid grid-cols-2 gap-3 mt-3">
               <button
                 id="computeAll"
                 class="bg-yellow-500 text-white px-3 py-2 rounded"
               >
-                İstatistikleri Hesapla
+                Compute Descriptive Statistics
               </button>
               <button
                 id="runTests"
                 class="bg-violet-600 text-white px-3 py-2 rounded"
               >
-                İstatistiksel Testler
+                Run Statistical Tests
               </button>
 
               <button
                 id="exportCSV"
                 class="bg-sky-600 text-white px-3 py-2 rounded"
               >
-                CSV İndir
+                Download CSV
               </button>
 
               <label
@@ -217,19 +219,21 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               <div class="card p-3">
-                <h4 class="font-medium">Sınıf Hızlı Özet</h4>
-                <div id="quickSummary" class="muted mt-2">Henüz veri yok.</div>
+                <h4 class="font-medium">Class Quick Summary</h4>
+                <div id="quickSummary" class="muted mt-2">
+                  No data yet.
+                </div>
               </div>
 
               <div class="card p-3">
-                <h4 class="font-medium">Suggestion</h4>
+                <h4 class="font-medium">Instructional Suggestion</h4>
                 <div id="autoSuggestion" class="muted mt-2">—</div>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <h3 class="text-lg font-medium">Grafikler</h3>
+            <h3 class="text-lg font-medium">Charts</h3>
             <div class="grid grid-cols-1 gap-3 mt-3">
               <div class="chart-holder card p-3 row-span-1">
                 <canvas id="varkBar"></canvas>
@@ -241,7 +245,7 @@
           </div>
 
           <div class="card">
-            <h3 class="text-lg font-medium">Öğrenci Listesi</h3>
+            <h3 class="text-lg font-medium">Student List</h3>
             <div id="studentsTable" class="mt-2 scroll-y"></div>
           </div>
         </section>
@@ -254,13 +258,13 @@
       >
         <div class="bg-white rounded-lg w-[90%] md:w-3/5 p-4 shadow-xl">
           <div class="flex justify-between items-center mb-3">
-            <h3 class="text-lg font-semibold">🔒 Admin Girişi</h3>
-            <button id="closeAdmin" class="text-slate-600">Kapat ✖</button>
+            <h3 class="text-lg font-semibold">🔒 Admin Login</h3>
+            <button id="closeAdmin" class="text-slate-600">Close ✖</button>
           </div>
           <div>
             <input
               id="adminPassword"
-              placeholder="Şifre (varsayılan: 12345)"
+              placeholder="Password (default: 12345)"
               type="password"
               class="border rounded px-3 py-2 w-full"
             />
@@ -269,10 +273,10 @@
                 id="adminLoginBtn"
                 class="bg-indigo-600 text-white px-4 py-2 rounded"
               >
-                Giriş
+                Log in
               </button>
               <button id="adminCancel" class="bg-gray-300 px-4 py-2 rounded">
-                İptal
+                Cancel
               </button>
             </div>
           </div>
@@ -287,7 +291,7 @@
         <div class="max-w-[1100px] mx-auto mt-8 bg-white rounded-lg p-6 mb-8">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">
-              Admin Paneli — Sınıf Analizleri
+              Admin Panel — Class Analyses
             </h2>
             <div class="flex gap-2">
               <button
@@ -303,7 +307,7 @@
                 JSON İndir
               </button>
               <button id="adminClose" class="bg-gray-300 px-3 py-2 rounded">
-                Kapat
+                Close
               </button>
             </div>
           </div>
@@ -313,36 +317,36 @@
               class="tabBtn bg-slate-100 px-3 py-2 rounded"
               data-tab="tab-list"
             >
-              Sınıf Listesi
+              Class List
             </button>
             <button
               class="tabBtn bg-slate-100 px-3 py-2 rounded"
               data-tab="tab-vark"
             >
-              VARK Analizi
+              VARK Analysis
             </button>
             <button
               class="tabBtn bg-slate-100 px-3 py-2 rounded"
               data-tab="tab-kolb"
             >
-              KOLB Analizi
+              KOLB Analysis
             </button>
 
             <button
               class="tabBtn bg-slate-100 px-3 py-2 rounded"
               data-tab="tab-stats"
             >
-              Tüm İstatistikler
+              All Statistics
             </button>
           </nav>
 
           <section id="tab-list" class="tabContent">
-            <h3 class="font-medium">Öğrenci Listesi</h3>
+            <h3 class="font-medium">Student List</h3>
             <div id="adminStudents" class="mt-3"></div>
           </section>
 
           <section id="tab-vark" class="hidden tabContent">
-            <h3 class="font-medium">VARK Detayları</h3>
+            <h3 class="font-medium">VARK Details</h3>
             <div
               id="adminVark"
               class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3"
@@ -350,7 +354,7 @@
           </section>
 
           <section id="tab-kolb" class="hidden tabContent">
-            <h3 class="font-medium">KOLB Detayları</h3>
+            <h3 class="font-medium">KOLB Details</h3>
             <div
               id="adminKolb"
               class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3"
@@ -358,7 +362,7 @@
           </section>
 
           <section id="tab-stats" class="hidden tabContent">
-            <h3 class="font-medium">İstatistiksel Testler & Özetler</h3>
+            <h3 class="font-medium">Statistical Tests & Summaries</h3>
             <pre
               id="statOutput"
               class="mt-3 bg-slate-50 p-3 rounded text-sm"
@@ -408,7 +412,7 @@
         .addEventListener("change", async (ev) => {
           const f = ev.target.files[0];
           if (!f) return;
-          document.getElementById("xlsInfo").innerText = "Yükleniyor...";
+          document.getElementById("xlsInfo").innerText = "Loading...";
           const data = await f.arrayBuffer();
           const wb = XLSX.read(data);
           const sheetName = wb.SheetNames[0];
@@ -416,12 +420,12 @@
           const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
           rawQuestions = json.map((r, idx) => {
-            const qText =
+          const qText =
               r.question ||
               r.soru ||
               r.Question ||
               Object.values(r)[0] ||
-              "Soru " + (idx + 1);
+              "Question " + (idx + 1);
             const opts = [];
             ["A", "optionA", "a", "secenek1", "Option1", "opt1"].forEach(
               (k) => {
@@ -477,7 +481,7 @@
           }
 
           document.getElementById("xlsInfo").innerText =
-            `${rawQuestions.length} soru yüklendi`;
+            `${rawQuestions.length} questions loaded`;
           renderQuestions();
         });
 
@@ -489,7 +493,7 @@
         container.innerHTML = "";
         if (!rawQuestions.length) {
           container.innerHTML =
-            '<div class="muted">Henüz soru yok. Excel yükleyin.</div>';
+            '<div class="muted">No questions yet. Please load an Excel file.</div>';
           return;
         }
         rawQuestions.forEach((q, idx) => {
@@ -516,7 +520,7 @@
       ----------------------------*/
       document.getElementById("startTest").addEventListener("click", () => {
         if (!rawQuestions.length) {
-          alert("Önce soruları yükleyin.");
+          alert("Please load the questions first.");
           return;
         }
         document
@@ -554,7 +558,7 @@
       function saveStudent() {
         const name = document.getElementById("studentName").value.trim();
         if (!name) {
-          alert("Öğrenci adı gerekli");
+          alert("Student name is required.");
           return;
         }
 
@@ -621,7 +625,7 @@
         computeQuickSummary();
         renderAllCharts();
 
-        alert("Öğrenci kaydedildi: " + meta.name);
+        alert("Student saved: " + meta.name);
         document.getElementById("studentName").value = "";
         document.getElementById("studentGPA").value = "";
         document.getElementById("clearResponses").click();
@@ -633,11 +637,11 @@
       function renderStudentsTable() {
         const el = document.getElementById("studentsTable");
         if (!students.length) {
-          el.innerHTML = '<div class="muted">Henüz öğrenci yok.</div>';
+          el.innerHTML = '<div class="muted">No students yet.</div>';
           return;
         }
         let html =
-          '<table class="min-w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Ad</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Zaman</th></tr></thead><tbody>';
+          '<table class="min-w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Saved at</th></tr></thead><tbody>';
         students.forEach((s) => {
           html += `<tr class="border-t"><td class="py-2">${
             s.meta.name
@@ -663,7 +667,9 @@
       function computeQuickSummary(showAlert = false) {
         if (!students.length) {
           document.getElementById("quickSummary").innerText =
-            "Henüz öğrenci yok.";
+            "No students yet.";
+          document.getElementById("autoSuggestion").innerText =
+            "There are no students in the dataset yet.";
           return;
         }
         const gpas = students.map((s) =>
@@ -693,13 +699,13 @@
           }
         });
 
-        const quick = `Toplam öğrenci: ${count}
-      Eksik GPA: ${missingGPA}
-      Ortalama GPA: ${meanGPA ? meanGPA.toFixed(2) : "-"}
-      Medyan GPA: ${medianGPA ? medianGPA.toFixed(2) : "-"}
+        const quick = `Total students: ${count}
+      Missing GPA: ${missingGPA}
+      Mean GPA: ${meanGPA ? meanGPA.toFixed(2) : "-"}
+      Median GPA: ${medianGPA ? medianGPA.toFixed(2) : "-"}
       Std GPA: ${stdGPA ? stdGPA.toFixed(2) : "-"}
-      VARK toplamları: V=${vTotals.V}, A=${vTotals.A}, R=${vTotals.R}, K=${vTotals.K}
-      KOLB tipler: Div=${kolbTypeCounts.Diverger}, Assim=${
+      VARK totals: V=${vTotals.V}, A=${vTotals.A}, R=${vTotals.R}, K=${vTotals.K}
+      KOLB types: Div=${kolbTypeCounts.Diverger}, Assim=${
         kolbTypeCounts.Assimilator
       }, Conv=${kolbTypeCounts.Converger}, Accom=${
         kolbTypeCounts.Accommodator
@@ -962,6 +968,68 @@
         return pearson(rank(x), rank(y));
       }
 
+      // Simple k-means for 2D points (used for exploratory clustering)
+      function kMeans2D(points, k = 3, maxIter = 30) {
+        if (!points.length || k <= 1) return null;
+        if (points.length < k) k = points.length;
+
+        // initialise centroids as random distinct points
+        const centroids = [];
+        const used = new Set();
+        while (centroids.length < k) {
+          const idx = Math.floor(Math.random() * points.length);
+          if (used.has(idx)) continue;
+          used.add(idx);
+          centroids.push({ x: points[idx].x, y: points[idx].y });
+        }
+
+        let assignments = new Array(points.length).fill(0);
+
+        for (let iter = 0; iter < maxIter; iter++) {
+          let changed = false;
+
+          // assignment step
+          for (let i = 0; i < points.length; i++) {
+            let bestIdx = -1;
+            let bestDist = Infinity;
+            for (let c = 0; c < k; c++) {
+              const dx = points[i].x - centroids[c].x;
+              const dy = points[i].y - centroids[c].y;
+              const d2 = dx * dx + dy * dy;
+              if (d2 < bestDist) {
+                bestDist = d2;
+                bestIdx = c;
+              }
+            }
+            if (assignments[i] !== bestIdx) {
+              assignments[i] = bestIdx;
+              changed = true;
+            }
+          }
+
+          // recompute centroids
+          const sums = Array(k)
+            .fill(0)
+            .map(() => ({ x: 0, y: 0, count: 0 }));
+          for (let i = 0; i < points.length; i++) {
+            const c = assignments[i];
+            sums[c].x += points[i].x;
+            sums[c].y += points[i].y;
+            sums[c].count++;
+          }
+          for (let c = 0; c < k; c++) {
+            if (sums[c].count > 0) {
+              centroids[c].x = sums[c].x / sums[c].count;
+              centroids[c].y = sums[c].y / sums[c].count;
+            }
+          }
+
+          if (!changed) break;
+        }
+
+        return { centroids, assignments, k };
+      }
+
       /* ---------------------------
          Statistical tests
       ----------------------------*/
@@ -971,20 +1039,25 @@
 
       function runStatTests(showAlert = false) {
         if (!students.length) {
-          alert("Öğrenci yok.");
+          if (showAlert) {
+            alert("No students. Please add at least one student before running tests.");
+          }
+          document.getElementById("statOutput").innerText =
+            "No students in the dataset. Statistical tests cannot be computed.";
           return;
         }
 
-        let output = "=== İSTATİSTİKSEL TEST SONUÇLARI ===\n\n";
+        let output = "=== STATISTICAL TEST RESULTS ===\n\n";
 
-        // 1. VARK ANALİZİ
-        output += "【 VARK MODELİ ANALİZİ 】\n";
+        // 1. VARK MODEL ANALYSES
+        output += "【 VARK MODEL ANALYSES 】\n";
         output += "─".repeat(50) + "\n\n";
 
+        // 1.1 Course Type × Dominant VARK (Chi-square)
         const courseTypes = students.map(
-          (s) => s.meta.courseType || "Bilinmiyor",
+          (s) => s.meta.courseType || "Unknown",
         );
-        const varkDom = students.map((s) => s.dominant.vark || "Bilinmiyor");
+        const varkDom = students.map((s) => s.dominant.vark || "Unknown");
 
         const {
           table: varkTable,
@@ -993,18 +1066,50 @@
         } = contingencyTable(courseTypes, varkDom);
         const varkChi = chiSquareTest(varkTable);
 
-        output += `1. Chi-Square Testi (Ders Türü × VARK Dominant Stili)\n`;
-        output += `   χ² = ${varkChi.chi2.toFixed(4)}\n`;
-        output += `   df = ${varkChi.dof}\n`;
-        output += `   p-value = ${varkChi.p.toFixed(4)}\n`;
-        output += `   Yorum: ${
+        output += `1.1 Chi-square (Course Type × Dominant VARK)\n`;
+        output += `    χ² = ${varkChi.chi2.toFixed(4)}\n`;
+        output += `    df = ${varkChi.dof}\n`;
+        output += `    p-value = ${varkChi.p.toFixed(4)}\n`;
+        output += `    Note: ${
           varkChi.p < 0.05
-            ? "İstatistiksel olarak ANLAMLI ilişki var (p < 0.05)"
-            : "İstatistiksel olarak anlamlı ilişki YOK (p ≥ 0.05)"
+            ? "There is a statistically significant association between course type and dominant VARK style (p < 0.05)."
+            : "No statistically significant association was detected between course type and dominant VARK style (p ≥ 0.05)."
         }\n\n`;
 
-        // VARK × GPA korelasyon
-        const varkScoresV = students.map((s) => s.scores.VARK.V || 0);
+        // 1.2 Preferred learning resource × Dominant VARK (Chi-square)
+        const lrForVarkA = [];
+        const lrForVarkB = [];
+        students.forEach((s) => {
+          if (s.meta.learningResource && s.dominant.vark) {
+            lrForVarkA.push(s.meta.learningResource);
+            lrForVarkB.push(s.dominant.vark);
+          }
+        });
+
+        if (lrForVarkA.length > 0) {
+          const {
+            table: lrVarkTable,
+            aVals: lrVals,
+            bVals: domVarkVals,
+          } = contingencyTable(lrForVarkA, lrForVarkB);
+          const lrVarkChi = chiSquareTest(lrVarkTable);
+
+          output += `1.2 Chi-square (Learning Resource × Dominant VARK)\n`;
+          output += `    n = ${lrForVarkA.length}\n`;
+          output += `    χ² = ${lrVarkChi.chi2.toFixed(4)}\n`;
+          output += `    df = ${lrVarkChi.dof}\n`;
+          output += `    p-value = ${lrVarkChi.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            lrVarkChi.p < 0.05
+              ? "Students’ preferred learning resources and their dominant VARK styles are related in a statistically significant way (p < 0.05)."
+              : "No clear statistical link was found between preferred learning resource and dominant VARK style (p ≥ 0.05)."
+          }\n\n`;
+        } else {
+          output += `1.2 Chi-square (Learning Resource × Dominant VARK)\n`;
+          output += `    Not enough matched data (missing learning resource or VARK type).\n\n`;
+        }
+
+        // 1.3 VARK Visual score × GPA correlation
         const gpas = students.map((s) => s.meta.gpa).filter((g) => g != null);
         const varkScoresVWithGPA = students
           .filter((s) => s.meta.gpa != null)
@@ -1013,16 +1118,23 @@
         if (gpas.length >= 3) {
           const pearsonVark = pearson(varkScoresVWithGPA, gpas);
           const spearmanVark = spearman(varkScoresVWithGPA, gpas);
-          output += `2. VARK Visual Skoru × GPA Korelasyonu\n`;
-          output += `   n = ${gpas.length}\n`;
-          output += `   Pearson r = ${pearsonVark ? pearsonVark.toFixed(4) : "—"}\n`;
-          output += `   Spearman ρ = ${spearmanVark ? spearmanVark.toFixed(4) : "—"}\n\n`;
+          output += `1.3 Correlation (VARK Visual Score × GPA)\n`;
+          output += `    n = ${gpas.length}\n`;
+          output += `    Pearson r = ${
+            pearsonVark || pearsonVark === 0 ? pearsonVark.toFixed(4) : "—"
+          }\n`;
+          output += `    Spearman ρ = ${
+            spearmanVark || spearmanVark === 0
+              ? spearmanVark.toFixed(4)
+              : "—"
+          }\n\n`;
         } else {
-          output += `2. VARK × GPA Korelasyonu: Yetersiz veri (n < 3)\n\n`;
+          output += `1.3 Correlation (VARK Visual Score × GPA)\n`;
+          output += `    Not enough data (n < 3 with valid GPA).\n\n`;
         }
 
-        // 2. KOLB ANALİZİ
-        output += "【 KOLB MODELİ ANALİZİ 】\n";
+        // 2. KOLB MODEL ANALYSES
+        output += "【 KOLB MODEL ANALYSES 】\n";
         output += "─".repeat(50) + "\n\n";
 
         const kolbTypes = [
@@ -1037,30 +1149,31 @@
             .map((s) => s.meta.gpa),
         );
 
-        const anova = oneWayANOVA(kolbGroups);
-        if (anova) {
-          output += `3. One-Way ANOVA (KOLB Tipi × GPA)\n`;
-          output += `   F(${anova.dfBetween}, ${anova.dfWithin}) = ${anova.F.toFixed(4)}\n`;
-          output += `   p-value = ${anova.p.toFixed(4)}\n`;
-          output += `   Yorum: ${
-            anova.p < 0.05
-              ? "KOLB tipleri arasında GPA açısından ANLAMLI fark var (p < 0.05)"
-              : "KOLB tipleri arasında GPA açısından anlamlı fark YOK (p ≥ 0.05)"
+        const anovaGpaKolb = oneWayANOVA(kolbGroups);
+        if (anovaGpaKolb) {
+          output += `2.1 One-way ANOVA (KOLB Type × GPA)\n`;
+          output += `    F(${anovaGpaKolb.dfBetween}, ${anovaGpaKolb.dfWithin}) = ${anovaGpaKolb.F.toFixed(4)}\n`;
+          output += `    p-value = ${anovaGpaKolb.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            anovaGpaKolb.p < 0.05
+              ? "Mean GPA differs significantly between at least two KOLB types (p < 0.05)."
+              : "No statistically significant GPA differences were observed between KOLB types (p ≥ 0.05)."
           }\n\n`;
-          output += `   Grup Ortalamaları:\n`;
+          output += `    Group means (GPA):\n`;
           kolbTypes.forEach((type, i) => {
             if (kolbGroups[i].length > 0) {
-              output += `   - ${type}: μ = ${anova.groupMeans[i].toFixed(2)} (n = ${
-                kolbGroups[i].length
-              })\n`;
+              output += `    - ${type}: μ = ${anovaGpaKolb.groupMeans[
+                i
+              ].toFixed(2)} (n = ${kolbGroups[i].length})\n`;
             }
           });
           output += "\n";
         } else {
-          output += `3. One-Way ANOVA: Yetersiz veri (< 2 grup)\n\n`;
+          output += `2.1 One-way ANOVA (KOLB Type × GPA)\n`;
+          output += `    Not enough data (need at least 2 KOLB groups with valid GPA).\n\n`;
         }
 
-        // Kolb AC-CE ekseni × GPA
+        // 2.2 Kolb AC–CE axis × GPA
         const acMinusCE = students
           .filter((s) => s.meta.gpa != null)
           .map((s) => (s.scores.Kolb.AC || 0) - (s.scores.Kolb.CE || 0));
@@ -1070,23 +1183,271 @@
 
         if (gpasForKolb.length >= 3) {
           const pearsonKolb = pearson(acMinusCE, gpasForKolb);
-          output += `4. KOLB AC-CE Ekseni × GPA Korelasyonu\n`;
-          output += `   n = ${gpasForKolb.length}\n`;
-          output += `   Pearson r = ${pearsonKolb ? pearsonKolb.toFixed(4) : "—"}\n`;
-          output += `   (Pozitif r: Soyut kavramlaştırma yükseldikçe GPA artar)\n\n`;
+          output += `2.2 Correlation (KOLB AC–CE Axis × GPA)\n`;
+          output += `    n = ${gpasForKolb.length}\n`;
+          output += `    Pearson r = ${
+            pearsonKolb || pearsonKolb === 0 ? pearsonKolb.toFixed(4) : "—"
+          }\n`;
+          output += `    Interpretation: A positive r suggests that a stronger tendency toward abstract conceptualisation (AC over CE) is associated with higher GPA.\n\n`;
         } else {
-          output += `4. KOLB × GPA Korelasyonu: Yetersiz veri\n\n`;
+          output += `2.2 Correlation (KOLB AC–CE Axis × GPA)\n`;
+          output += `    Not enough data (n < 3 with valid GPA).\n\n`;
         }
 
-        output += "=== RAPOR SONU ===\n";
+        // 3. WEEKLY STUDY HOURS ANALYSES
+        output += "【 WEEKLY STUDY HOURS ANALYSES 】\n";
+        output += "─".repeat(50) + "\n\n";
+
+        // 3.1 Weekly hours × GPA
+        const whForGpa = [];
+        const gpaForWh = [];
+        students.forEach((s) => {
+          if (s.meta.weeklyHours != null && s.meta.gpa != null) {
+            whForGpa.push(s.meta.weeklyHours);
+            gpaForWh.push(s.meta.gpa);
+          }
+        });
+
+        if (whForGpa.length >= 3) {
+          const pearsonWh = pearson(whForGpa, gpaForWh);
+          const spearmanWh = spearman(whForGpa, gpaForWh);
+          output += `3.1 Correlation (Weekly Study Hours × GPA)\n`;
+          output += `    n = ${whForGpa.length}\n`;
+          output += `    Pearson r = ${
+            pearsonWh || pearsonWh === 0 ? pearsonWh.toFixed(4) : "—"
+          }\n`;
+          output += `    Spearman ρ = ${
+            spearmanWh || spearmanWh === 0
+              ? spearmanWh.toFixed(4)
+              : "—"
+          }\n`;
+          output += `    Interpretation: Positive coefficients indicate that, in this sample, students reporting more weekly study hours also tend to have higher GPA.\n\n`;
+        } else {
+          output += `3.1 Correlation (Weekly Study Hours × GPA)\n`;
+          output += `    Not enough data (n < 3 with both weekly hours and GPA).\n\n`;
+        }
+
+        // 3.2 Weekly hours × dominant VARK (ANOVA)
+        const varkCats = ["V", "A", "R", "K"];
+        const varkHourGroups = varkCats.map((cat) =>
+          students
+            .filter(
+              (s) => s.dominant.vark === cat && s.meta.weeklyHours != null,
+            )
+            .map((s) => s.meta.weeklyHours),
+        );
+        const anovaWhVark = oneWayANOVA(varkHourGroups);
+
+        if (anovaWhVark) {
+          output += `3.2 One-way ANOVA (Dominant VARK × Weekly Study Hours)\n`;
+          output += `    F(${anovaWhVark.dfBetween}, ${anovaWhVark.dfWithin}) = ${anovaWhVark.F.toFixed(4)}\n`;
+          output += `    p-value = ${anovaWhVark.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            anovaWhVark.p < 0.05
+              ? "Average weekly study hours differ significantly between at least two VARK groups (p < 0.05)."
+              : "No statistically significant differences in weekly study hours were found between VARK groups (p ≥ 0.05)."
+          }\n`;
+          output += `    Group means (hours):\n`;
+          varkCats.forEach((cat, i) => {
+            if (varkHourGroups[i].length > 0) {
+              output += `    - ${cat}: μ = ${anovaWhVark.groupMeans[
+                i
+              ].toFixed(2)} (n = ${varkHourGroups[i].length})\n`;
+            }
+          });
+          output += "\n";
+        } else {
+          output += `3.2 One-way ANOVA (Dominant VARK × Weekly Study Hours)\n`;
+          output += `    Not enough data (need at least 2 VARK groups with weekly hours).\n\n`;
+        }
+
+        // 3.3 Weekly hours × KOLB type (ANOVA)
+        const kolbHourGroups = kolbTypes.map((type) =>
+          students
+            .filter(
+              (s) => s.dominant.kolb === type && s.meta.weeklyHours != null,
+            )
+            .map((s) => s.meta.weeklyHours),
+        );
+        const anovaWhKolb = oneWayANOVA(kolbHourGroups);
+
+        if (anovaWhKolb) {
+          output += `3.3 One-way ANOVA (KOLB Type × Weekly Study Hours)\n`;
+          output += `    F(${anovaWhKolb.dfBetween}, ${anovaWhKolb.dfWithin}) = ${anovaWhKolb.F.toFixed(4)}\n`;
+          output += `    p-value = ${anovaWhKolb.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            anovaWhKolb.p < 0.05
+              ? "Average weekly study hours differ significantly between at least two KOLB types (p < 0.05)."
+              : "No statistically significant differences in weekly study hours were found between KOLB types (p ≥ 0.05)."
+          }\n`;
+          output += `    Group means (hours):\n`;
+          kolbTypes.forEach((type, i) => {
+            if (kolbHourGroups[i].length > 0) {
+              output += `    - ${type}: μ = ${anovaWhKolb.groupMeans[
+                i
+              ].toFixed(2)} (n = ${kolbHourGroups[i].length})\n`;
+            }
+          });
+          output += "\n";
+        } else {
+          output += `3.3 One-way ANOVA (KOLB Type × Weekly Study Hours)\n`;
+          output += `    Not enough data (need at least 2 KOLB groups with weekly hours).\n\n`;
+        }
+
+        // 4. GENDER AND LEARNING STYLE ANALYSES
+        output += "【 GENDER AND LEARNING STYLE ANALYSES 】\n";
+        output += "─".repeat(50) + "\n\n";
+
+        // 4.1 Gender × Dominant VARK (Chi-square)
+        const genderForVarkA = [];
+        const genderForVarkB = [];
+        students.forEach((s) => {
+          if (s.meta.gender && s.dominant.vark) {
+            genderForVarkA.push(s.meta.gender);
+            genderForVarkB.push(s.dominant.vark);
+          }
+        });
+
+        if (genderForVarkA.length > 0) {
+          const {
+            table: genderVarkTable,
+            aVals: genderVals,
+            bVals: genderVarkVals,
+          } = contingencyTable(genderForVarkA, genderForVarkB);
+          const genderVarkChi = chiSquareTest(genderVarkTable);
+
+          output += `4.1 Chi-square (Gender × Dominant VARK)\n`;
+          output += `    n = ${genderForVarkA.length}\n`;
+          output += `    χ² = ${genderVarkChi.chi2.toFixed(4)}\n`;
+          output += `    df = ${genderVarkChi.dof}\n`;
+          output += `    p-value = ${genderVarkChi.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            genderVarkChi.p < 0.05
+              ? "Learning style preferences (VARK) differ by gender in a statistically significant way (p < 0.05)."
+              : "No statistically significant association was found between gender and dominant VARK style (p ≥ 0.05)."
+          }\n\n`;
+        } else {
+          output += `4.1 Chi-square (Gender × Dominant VARK)\n`;
+          output += `    Not enough data (gender or VARK type missing).\n\n`;
+        }
+
+        // 4.2 Gender × KOLB type (Chi-square)
+        const genderForKolbA = [];
+        const genderForKolbB = [];
+        students.forEach((s) => {
+          if (s.meta.gender && s.dominant.kolb) {
+            genderForKolbA.push(s.meta.gender);
+            genderForKolbB.push(s.dominant.kolb);
+          }
+        });
+
+        if (genderForKolbA.length > 0) {
+          const {
+            table: genderKolbTable,
+            aVals: genderKolbValsA,
+            bVals: genderKolbValsB,
+          } = contingencyTable(genderForKolbA, genderForKolbB);
+          const genderKolbChi = chiSquareTest(genderKolbTable);
+
+          output += `4.2 Chi-square (Gender × KOLB Type)\n`;
+          output += `    n = ${genderForKolbA.length}\n`;
+          output += `    χ² = ${genderKolbChi.chi2.toFixed(4)}\n`;
+          output += `    df = ${genderKolbChi.dof}\n`;
+          output += `    p-value = ${genderKolbChi.p.toFixed(4)}\n`;
+          output += `    Note: ${
+            genderKolbChi.p < 0.05
+              ? "KOLB learning types are distributed differently across genders (p < 0.05)."
+              : "No statistically significant association was found between gender and KOLB type (p ≥ 0.05)."
+          }\n\n`;
+        } else {
+          output += `4.2 Chi-square (Gender × KOLB Type)\n`;
+          output += `    Not enough data (gender or KOLB type missing).\n\n`;
+        }
+
+        // 5. Simple clustering on GPA and dominant VARK (exploratory)
+        const varkOrder = ["V", "A", "R", "K"];
+        const clusterSource = students
+          .filter((s) => s.meta.gpa != null && s.dominant.vark)
+          .map((s) => ({
+            gpa: s.meta.gpa,
+            vark: s.dominant.vark,
+          }));
+
+        if (clusterSource.length >= 4) {
+          const gList = clusterSource.map((d) => d.gpa);
+          const vNumList = clusterSource.map((d) => {
+            const idx = varkOrder.indexOf(d.vark);
+            return idx === -1 ? 0 : idx;
+          });
+          const gMean = ss.mean(gList);
+          const vMean = ss.mean(vNumList);
+          const gStd = ss.standardDeviation(gList) || 1;
+          const vStd = ss.standardDeviation(vNumList) || 1;
+
+          const normPoints = clusterSource.map((d, i) => ({
+            x: (d.gpa - gMean) / gStd,
+            y: (vNumList[i] - vMean) / vStd,
+          }));
+
+          const k = Math.min(3, normPoints.length);
+          const km = kMeans2D(normPoints, k);
+
+          if (km) {
+            const clusters = Array(km.k)
+              .fill(0)
+              .map(() => ({
+                count: 0,
+                gpaSum: 0,
+                varkCounts: { V: 0, A: 0, R: 0, K: 0 },
+              }));
+
+            km.assignments.forEach((cIdx, i) => {
+              const c = clusters[cIdx];
+              c.count++;
+              c.gpaSum += clusterSource[i].gpa;
+              const label = clusterSource[i].vark;
+              if (label && c.varkCounts[label] != null) {
+                c.varkCounts[label] += 1;
+              }
+            });
+
+            output += "【 CLUSTERING (EXPLORATORY) 】\n";
+            output +=
+              "A simple k-means clustering (k up to 3) was applied on standardised GPA and dominant VARK style (encoded numerically).\n";
+            output +=
+              "Clusters roughly group students by similar performance (GPA) and learning preference (VARK).\n\n";
+
+            clusters.forEach((c, idx) => {
+              if (!c.count) return;
+              const meanG = c.gpaSum / c.count;
+              const domVarkEntry = Object.entries(c.varkCounts).sort(
+                (a, b) => b[1] - a[1],
+              )[0];
+              const domVark = domVarkEntry ? domVarkEntry[0] : "-";
+              output += `Cluster ${idx + 1}: n = ${
+                c.count
+              }, mean GPA ≈ ${meanG.toFixed(
+                2,
+              )}, most frequent VARK ≈ ${domVark}\n`;
+            });
+
+            output += "\n";
+          }
+        } else {
+          output += "【 CLUSTERING (EXPLORATORY) 】\n";
+          output +=
+            "Not enough students with both GPA and a valid dominant VARK style to run a meaningful clustering.\n\n";
+        }
+
+        output += "=== END OF REPORT ===\n";
 
         document.getElementById("statOutput").innerText = output;
         populateAdminVarkDetails(varkChi, varkTable, courseVals, varkVals);
-        populateAdminKolbDetails(anova, kolbGroups, kolbTypes);
+        populateAdminKolbDetails(anovaGpaKolb, kolbGroups, kolbTypes);
 
         if (showAlert)
           alert(
-            "İstatistiksel testler tamamlandı. Admin → Tüm İstatistikler sekmesine bakın.",
+            "Statistical tests have been completed. Please check Admin → All Statistics tab.",
           );
       }
 
@@ -1121,7 +1482,7 @@
             labels: ["Visual", "Aural", "Read/Write", "Kinesthetic"],
             datasets: [
               {
-                label: "VARK Dağılımı (Toplam Skorlar)",
+                label: "VARK distribution (total scores)",
                 data: [vTotals.V, vTotals.A, vTotals.R, vTotals.K],
                 backgroundColor: ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"],
               },
@@ -1132,7 +1493,7 @@
             maintainAspectRatio: false,
             plugins: {
               legend: { display: true },
-              title: { display: true, text: "VARK Stil Dağılımı" },
+              title: { display: true, text: "VARK Style Distribution" },
             },
           },
         });
@@ -1146,7 +1507,7 @@
             labels: ["Diverger", "Assimilator", "Converger", "Accommodator"],
             datasets: [
               {
-                label: "KOLB Tip Dağılımı (Kişi Sayısı)",
+                label: "KOLB type distribution (number of students)",
                 data: [
                   kolbTypeCounts.Diverger,
                   kolbTypeCounts.Assimilator,
@@ -1160,9 +1521,9 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
+          plugins: {
               legend: { display: true },
-              title: { display: true, text: "KOLB Öğrenme Tipi Dağılımı" },
+              title: { display: true, text: "KOLB Type Distribution" },
             },
           },
         });
@@ -1218,7 +1579,7 @@
         .addEventListener("click", () => {
           if (
             !confirm(
-              "Tüm öğrenci verilerini localStorage'dan silmek istediğinizden emin misiniz?",
+              "Are you sure you want to delete all student data from localStorage? This action cannot be undone.",
             )
           )
             return;
@@ -1228,7 +1589,9 @@
           populateAdminStudents();
           renderAllCharts();
           computeQuickSummary();
-          alert("students_v1 temizlendi.");
+          document.getElementById("statOutput").innerText =
+            "All student data has been cleared. No statistics are available.";
+          alert("All student data in localStorage has been cleared.");
         });
 
       document.querySelectorAll(".tabBtn").forEach((btn) => {
@@ -1247,11 +1610,11 @@
       function populateAdminStudents() {
         const el = document.getElementById("adminStudents");
         if (!students.length) {
-          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          el.innerHTML = '<div class="muted">No students yet.</div>';
           return;
         }
         let html =
-          '<table class="min-w-full text-sm"><thead><tr><th>Ad</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Zaman</th><th>Sil</th></tr></thead><tbody>';
+          '<table class="min-w-full text-sm"><thead><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Saved at</th><th>Delete</th></tr></thead><tbody>';
         students.forEach((s) => {
           html += `<tr class="border-t"><td>${s.meta.name}</td><td>${
             s.meta.gpa === null ? "-" : s.meta.gpa.toFixed(2)
@@ -1259,7 +1622,7 @@
             s.dominant.kolb || "-"
           }</td><td class="tiny">${new Date(
             s.meta.savedAt,
-          ).toLocaleString()}</td><td><button onclick="deleteAdminStudent('${s.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Sil</button></td></tr>`;
+          ).toLocaleString()}</td><td><button onclick="deleteAdminStudent('${s.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
         });
         html += "</tbody></table>";
         el.innerHTML = html;
@@ -1269,13 +1632,20 @@
         students = students.filter((s) => s.id !== id);
         localStorage.setItem("students_v1", JSON.stringify(students));
 
+        // Update admin list
         populateAdminStudents();
+        // Keep main UI and charts in sync
+        renderStudentsTable();
+        renderAllCharts();
+        computeQuickSummary();
+        // Refresh statistical panels without bothering the user with alerts
+        runStatTests(false);
       }
 
       function populateAdminVarkDetails(chi, table, aVals, bVals) {
         const el = document.getElementById("adminVark");
         if (!students.length) {
-          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          el.innerHTML = '<div class="muted">No students yet.</div>';
           return;
         }
 
@@ -1291,7 +1661,7 @@
         });
 
         let html = `<div class="card p-3">
-                <b>VARK Toplam Skorlar</b><br>
+                <b>Total VARK Scores (all students)</b><br>
                 Visual: ${totals.V}<br>
                 Aural: ${totals.A}<br>
                 Read/Write: ${totals.R}<br>
@@ -1299,21 +1669,21 @@
               </div>`;
 
         html += `<div class="card p-3">
-                <b>VARK Baskın Dağılımı (Kişi)</b><br>
+                <b>Dominant VARK Distribution (students)</b><br>
                 V: ${dom.V} | A: ${dom.A} | R: ${dom.R} | K: ${dom.K}
               </div>`;
 
         html += `<div class="card p-3 col-span-2">
-                <b>Chi-Square Testi Sonucu</b><br>
+                <b>Chi-square Test (Course Type × Dominant VARK)</b><br>
                 χ² = ${chi.chi2.toFixed(4)}, df = ${chi.dof}, p = ${chi.p.toFixed(4)}<br>
                 <span class="text-xs ${chi.p < 0.05 ? "text-green-600" : "text-gray-500"}">
-                  ${chi.p < 0.05 ? "✓ Anlamlı ilişki (p < 0.05)" : "✗ Anlamlı ilişki yok"}
+                  ${chi.p < 0.05 ? "✓ Significant association (p < 0.05)" : "No significant association"}
                 </span>
               </div>`;
 
         html +=
-          '<div class="card p-3 col-span-2"><b>Kontinjensi Tablosu (Ders Türü × VARK)</b><br>';
-        html += '<table class="min-w-full text-sm mt-2"><thead><tr><th></th>';
+          '<div class="card p-3 col-span-2"><b>Contingency Table (Course Type × Dominant VARK)</b><br>';
+        html += '<table class="min-w-full text-sm mt-2"><thead><tr><th>Course type</th>';
         bVals.forEach((b) => (html += `<th>${b}</th>`));
         html += "</tr></thead><tbody>";
         for (let i = 0; i < aVals.length; i++) {
@@ -1330,7 +1700,7 @@
       function populateAdminKolbDetails(anova, groups, types) {
         const el = document.getElementById("adminKolb");
         if (!students.length) {
-          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          el.innerHTML = '<div class="muted">No students yet.</div>';
           return;
         }
 
@@ -1348,7 +1718,7 @@
         });
 
         let html = `<div class="card p-3">
-                <b>KOLB Tip Dağılımı</b><br>
+                <b>KOLB Type Distribution</b><br>
                 Diverger: ${typeCounts.Diverger}<br>
                 Assimilator: ${typeCounts.Assimilator}<br>
                 Converger: ${typeCounts.Converger}<br>
@@ -1357,18 +1727,18 @@
 
         if (anova) {
           html += `<div class="card p-3">
-                  <b>ANOVA Testi (KOLB Tip × GPA)</b><br>
+                  <b>ANOVA (KOLB Type × GPA)</b><br>
                   F(${anova.dfBetween}, ${anova.dfWithin}) = ${anova.F.toFixed(4)}<br>
                   p-value = ${anova.p.toFixed(4)}<br>
                   <span class="text-xs ${anova.p < 0.05 ? "text-green-600" : "text-gray-500"}">
-                    ${anova.p < 0.05 ? "✓ Anlamlı fark var (p < 0.05)" : "✗ Anlamlı fark yok"}
+                    ${anova.p < 0.05 ? "✓ Significant differences between groups (p < 0.05)" : "No statistically significant differences between groups"}
                   </span>
                 </div>`;
 
           html +=
-            '<div class="card p-3 col-span-2"><b>Grup Ortalamaları (GPA)</b><br>';
+            '<div class="card p-3 col-span-2"><b>Group Means (GPA by KOLB Type)</b><br>';
           html +=
-            '<table class="min-w-full text-sm mt-2"><thead><tr><th>KOLB Tipi</th><th>n</th><th>Ortalama GPA</th></tr></thead><tbody>';
+            '<table class="min-w-full text-sm mt-2"><thead><tr><th>KOLB Type</th><th>n</th><th>Mean GPA</th></tr></thead><tbody>';
           types.forEach((type, i) => {
             if (groups[i].length > 0) {
               html += `<tr class="border-t"><td>${type}</td><td class="text-center">${
@@ -1378,7 +1748,7 @@
           });
           html += "</tbody></table></div>";
         } else {
-          html += `<div class="card p-3"><b>ANOVA Testi</b><br>Yetersiz veri (< 2 grup)</div>`;
+          html += `<div class="card p-3"><b>ANOVA</b><br>Not enough data (less than 2 groups with valid GPA).</div>`;
         }
 
         el.innerHTML = html;
@@ -1420,7 +1790,7 @@
       ----------------------------*/
       document.getElementById("exportCSV").addEventListener("click", () => {
         if (!students.length) {
-          alert("Öğrenci yok.");
+          alert("No students. Please add at least one student before exporting CSV.");
           return;
         }
         const header = [
