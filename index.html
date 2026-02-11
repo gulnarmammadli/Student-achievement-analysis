@@ -1,0 +1,1508 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Öğrenme Stilleri & Sınıf Analizi – Tek Dosya</title>
+
+    <!-- Tailwind CDN for professional look -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 6px 30px rgba(20, 20, 60, 0.06);
+        padding: 18px;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 13px;
+      }
+      .tiny {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .scroll-y {
+        max-height: 420px;
+        overflow: auto;
+      }
+      .chart-holder {
+        height: 320px;
+      }
+      @media (max-width: 900px) {
+        .chart-holder {
+          height: 220px;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-6">
+    <div class="max-w-[1200px] mx-auto">
+      <!-- Header -->
+      <header class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold">
+            Öğrenme Stilleri & Sınıf Analiz
+          </h1>
+          <div class="muted">
+            Excel'den soruları yükle, öğrencileri test ettir, anında analizler &
+            grafikler.
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 card px-3 py-2">
+            <input
+              id="xlsInput"
+              type="file"
+              accept=".xlsx,.xls"
+              class="hidden"
+            />
+            <button
+              id="btnLoadXLS"
+              class="bg-indigo-600 text-white px-3 py-2 rounded"
+            >
+              Soruları Yükle (.xlsx)
+            </button>
+            <span id="xlsInfo" class="tiny ml-2">Henüz soru yüklenmedi</span>
+          </label>
+
+          <button
+            id="btnAdmin"
+            class="bg-slate-800 text-white px-3 py-2 rounded"
+          >
+            Admin
+          </button>
+          <button
+            id="exportAll"
+            class="bg-green-600 text-white px-3 py-2 rounded"
+          >
+            Rapor İndir (JSON)
+          </button>
+        </div>
+      </header>
+
+      <!-- Main layout -->
+      <main class="grid grid-cols-12 gap-6">
+        <!-- Left area: Student form / questions -->
+        <section class="col-span-12 lg:col-span-6 space-y-4">
+          <div id="studentCard" class="card">
+            <h2 class="text-lg font-medium">Öğrenci Bilgileri & Test</h2>
+            <p class="muted">
+              Ad, opsiyonel GPA girip teste başla. Sorular Excel'den otomatik
+              yüklenecek.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3 mt-3">
+              <input
+                id="studentName"
+                placeholder="Full Name"
+                class="border rounded px-3 py-2"
+              />
+              <input
+                id="studentGPA"
+                placeholder="GPA (optional)"
+                type="number"
+                step="0.01"
+                min="0"
+                max="4"
+                class="border rounded px-3 py-2"
+              />
+              <select id="studentGender" class="border rounded px-3 py-2">
+                <option value="">Gender</option>
+                <option>Female</option>
+                <option>Male</option>
+                <option>Other</option>
+              </select>
+              <select id="courseType" class="border rounded px-3 py-2">
+                <option value="">Course Type</option>
+                <option>Online</option>
+                <option>Hybrid</option>
+                <option>Face-to-face</option>
+              </select>
+              <input
+                id="weeklyHours"
+                placeholder="Weekly study hours"
+                type="number"
+                class="border rounded px-3 py-2"
+              />
+              <select id="learningResource" class="border rounded px-3 py-2">
+                <option value="">Preferred learning resource</option>
+                <option>Video</option>
+                <option>Text</option>
+                <option>Practical</option>
+              </select>
+            </div>
+
+            <div class="mt-4 flex gap-3">
+              <button
+                id="startTest"
+                class="bg-emerald-600 text-white px-4 py-2 rounded"
+              >
+                Teste Başla
+              </button>
+              <button
+                id="saveStudent"
+                class="bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                Kaydet (Cevap doldurunca)
+              </button>
+              <button
+                id="clearResponses"
+                class="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Temizle
+              </button>
+            </div>
+          </div>
+
+          <div id="questionsCard" class="card">
+            <h3 class="text-lg font-medium">Sorular</h3>
+            <p class="muted">
+              Excel yüklendiğinde sorular burada listelenecek. Her soru klasik
+              (tek cevap) olarak kaydedilir.
+            </p>
+            <div
+              id="questionsContainer"
+              class="scroll-y mt-3 space-y-4 p-2"
+            ></div>
+          </div>
+        </section>
+
+        <!-- Right area: Controls + Charts + Students -->
+        <section class="col-span-12 lg:col-span-6 space-y-4">
+          <div class="card">
+            <h3 class="text-lg font-medium">Hızlı İşlemler</h3>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+              <button
+                id="computeAll"
+                class="bg-yellow-500 text-white px-3 py-2 rounded"
+              >
+                İstatistikleri Hesapla
+              </button>
+              <button
+                id="runTests"
+                class="bg-violet-600 text-white px-3 py-2 rounded"
+              >
+                İstatistiksel Testler
+              </button>
+
+              <button
+                id="exportCSV"
+                class="bg-sky-600 text-white px-3 py-2 rounded"
+              >
+                CSV İndir
+              </button>
+
+              <label
+                class="bg-red-600 text-white px-3 py-2 rounded flex items-center justify-center cursor-pointer"
+              >
+                <input type="file" id="importJSON" class="hidden" />
+                Upload JSON file
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <div class="card p-3">
+                <h4 class="font-medium">Sınıf Hızlı Özet</h4>
+                <div id="quickSummary" class="muted mt-2">Henüz veri yok.</div>
+              </div>
+
+              <div class="card p-3">
+                <h4 class="font-medium">Suggestion</h4>
+                <div id="autoSuggestion" class="muted mt-2">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="text-lg font-medium">Grafikler</h3>
+            <div class="grid grid-cols-1 gap-3 mt-3">
+              <div class="chart-holder card p-3 row-span-1">
+                <canvas id="varkBar"></canvas>
+              </div>
+              <div class="chart-holder card p-3 row-span-1">
+                <canvas id="kolbBar"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="text-lg font-medium">Öğrenci Listesi</h3>
+            <div id="studentsTable" class="mt-2 scroll-y"></div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Admin modal -->
+      <div
+        id="adminModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg w-[90%] md:w-3/5 p-4 shadow-xl">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-semibold">🔒 Admin Girişi</h3>
+            <button id="closeAdmin" class="text-slate-600">Kapat ✖</button>
+          </div>
+          <div>
+            <input
+              id="adminPassword"
+              placeholder="Şifre (varsayılan: 12345)"
+              type="password"
+              class="border rounded px-3 py-2 w-full"
+            />
+            <div class="mt-3 flex justify-end gap-3">
+              <button
+                id="adminLoginBtn"
+                class="bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                Giriş
+              </button>
+              <button id="adminCancel" class="bg-gray-300 px-4 py-2 rounded">
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin panel (overlay) -->
+      <div
+        id="adminPanel"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto"
+      >
+        <div class="max-w-[1100px] mx-auto mt-8 bg-white rounded-lg p-6 mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold">
+              Admin Paneli — Sınıf Analizleri
+            </h2>
+            <div class="flex gap-2">
+              <button
+                id="clearStorageBtn"
+                class="bg-red-600 text-white px-3 py-2 rounded"
+              >
+                Clear Storage
+              </button>
+              <button
+                id="adminExport"
+                class="bg-green-600 text-white px-3 py-2 rounded"
+              >
+                JSON İndir
+              </button>
+              <button id="adminClose" class="bg-gray-300 px-3 py-2 rounded">
+                Kapat
+              </button>
+            </div>
+          </div>
+
+          <nav class="flex gap-2 mb-4">
+            <button
+              class="tabBtn bg-slate-100 px-3 py-2 rounded"
+              data-tab="tab-list"
+            >
+              Sınıf Listesi
+            </button>
+            <button
+              class="tabBtn bg-slate-100 px-3 py-2 rounded"
+              data-tab="tab-vark"
+            >
+              VARK Analizi
+            </button>
+            <button
+              class="tabBtn bg-slate-100 px-3 py-2 rounded"
+              data-tab="tab-kolb"
+            >
+              KOLB Analizi
+            </button>
+
+            <button
+              class="tabBtn bg-slate-100 px-3 py-2 rounded"
+              data-tab="tab-stats"
+            >
+              Tüm İstatistikler
+            </button>
+          </nav>
+
+          <section id="tab-list" class="tabContent">
+            <h3 class="font-medium">Öğrenci Listesi</h3>
+            <div id="adminStudents" class="mt-3"></div>
+          </section>
+
+          <section id="tab-vark" class="hidden tabContent">
+            <h3 class="font-medium">VARK Detayları</h3>
+            <div
+              id="adminVark"
+              class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3"
+            ></div>
+          </section>
+
+          <section id="tab-kolb" class="hidden tabContent">
+            <h3 class="font-medium">KOLB Detayları</h3>
+            <div
+              id="adminKolb"
+              class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3"
+            ></div>
+          </section>
+
+          <section id="tab-stats" class="hidden tabContent">
+            <h3 class="font-medium">İstatistiksel Testler & Özetler</h3>
+            <pre
+              id="statOutput"
+              class="mt-3 bg-slate-50 p-3 rounded text-sm"
+            ></pre>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ---------------------------
+         Global state
+      ----------------------------*/
+      let rawQuestions = [];
+      let students = [];
+      let charts = {};
+
+      /* ---------------------------
+         Helpers
+      ----------------------------*/
+      const uid = () => Math.random().toString(36).slice(2, 9);
+      const show = (id) =>
+        document.getElementById(id).classList.remove("hidden");
+      const hide = (id) => document.getElementById(id).classList.add("hidden");
+
+      /* ---------------------------
+         Load saved students on init
+      ----------------------------*/
+      function loadFromStorage() {
+        students = JSON.parse(localStorage.getItem("students_v1") || "[]");
+        renderStudentsTable();
+        renderAllCharts();
+        computeQuickSummary();
+      }
+      loadFromStorage();
+
+      /* ---------------------------
+         XLSX Loading
+      ----------------------------*/
+      document
+        .getElementById("btnLoadXLS")
+        .addEventListener("click", () =>
+          document.getElementById("xlsInput").click(),
+        );
+      document
+        .getElementById("xlsInput")
+        .addEventListener("change", async (ev) => {
+          const f = ev.target.files[0];
+          if (!f) return;
+          document.getElementById("xlsInfo").innerText = "Yükleniyor...";
+          const data = await f.arrayBuffer();
+          const wb = XLSX.read(data);
+          const sheetName = wb.SheetNames[0];
+          const sheet = wb.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          rawQuestions = json.map((r, idx) => {
+            const qText =
+              r.question ||
+              r.soru ||
+              r.Question ||
+              Object.values(r)[0] ||
+              "Soru " + (idx + 1);
+            const opts = [];
+            ["A", "optionA", "a", "secenek1", "Option1", "opt1"].forEach(
+              (k) => {
+                if (r[k]) opts.push(r[k]);
+              },
+            );
+            ["B", "optionB", "b", "secenek2", "Option2", "opt2"].forEach(
+              (k) => {
+                if (r[k]) opts.push(r[k]);
+              },
+            );
+            ["C", "optionC", "c", "secenek3", "Option3", "opt3"].forEach(
+              (k) => {
+                if (r[k]) opts.push(r[k]);
+              },
+            );
+            ["D", "optionD", "d", "secenek4", "Option4", "opt4"].forEach(
+              (k) => {
+                if (r[k]) opts.push(r[k]);
+              },
+            );
+            if (opts.length === 0) {
+              const vals = Object.values(r)
+                .slice(1)
+                .filter((v) => v !== "");
+              for (let i = 0; i < Math.min(4, vals.length); i++)
+                opts.push(vals[i]);
+            }
+            const cat = (
+              r.category ||
+              r.kategori ||
+              r.Category ||
+              r.Kategori ||
+              ""
+            )
+              .toString()
+              .trim();
+            return {
+              id: uid(),
+              q: qText,
+              options: opts.length ? opts : ["A", "B", "C", "D"],
+              category: cat || null,
+              index: idx,
+            };
+          });
+
+          const anyCat = rawQuestions.some((q) => q.category);
+          if (!anyCat) {
+            for (let i = 0; i < rawQuestions.length; i++) {
+              if (i < 16) rawQuestions[i].category = "VARK";
+              else if (i < 28) rawQuestions[i].category = "Kolb";
+            }
+          }
+
+          document.getElementById("xlsInfo").innerText =
+            `${rawQuestions.length} soru yüklendi`;
+          renderQuestions();
+        });
+
+      /* ---------------------------
+         Render Questions
+      ----------------------------*/
+      function renderQuestions() {
+        const container = document.getElementById("questionsContainer");
+        container.innerHTML = "";
+        if (!rawQuestions.length) {
+          container.innerHTML =
+            '<div class="muted">Henüz soru yok. Excel yükleyin.</div>';
+          return;
+        }
+        rawQuestions.forEach((q, idx) => {
+          const div = document.createElement("div");
+          div.className = "border rounded p-3";
+          let optsHtml = "";
+          q.options.forEach((opt, oi) => {
+            const id = `q-${q.id}-o-${oi}`;
+            optsHtml += `<label class="flex items-center gap-2"><input type="radio" name="q-${q.id}" value="${oi}" id="${id}" /> <span class="text-sm">${opt}</span></label>`;
+          });
+          div.innerHTML = `<div class="flex items-start justify-between"><div><div class="text-sm font-medium">#${
+            idx + 1
+          } <span class="muted">[${
+            q.category || "Unknown"
+          }]</span></div><div class="mt-1">${
+            q.q
+          }</div></div></div><div class="mt-3 space-y-2">${optsHtml}</div>`;
+          container.appendChild(div);
+        });
+      }
+
+      /* ---------------------------
+         Test control buttons
+      ----------------------------*/
+      document.getElementById("startTest").addEventListener("click", () => {
+        if (!rawQuestions.length) {
+          alert("Önce soruları yükleyin.");
+          return;
+        }
+        document
+          .getElementById("questionsContainer")
+          .scrollIntoView({ behavior: "smooth" });
+      });
+
+      document
+        .getElementById("clearResponses")
+        .addEventListener("click", () => {
+          rawQuestions.forEach((q) => {
+            const radios = document.getElementsByName("q-" + q.id);
+            radios.forEach((r) => (r.checked = false));
+          });
+        });
+
+      /* ---------------------------
+         Calculate Kolb Learning Type
+      ----------------------------*/
+      function calculateKolbType(CE, RO, AC, AE) {
+        if (CE > AC && RO > AE) return "Diverger";
+        if (AC > CE && RO > AE) return "Assimilator";
+        if (AC > CE && AE > RO) return "Converger";
+        if (CE > AC && AE > RO) return "Accommodator";
+        return null;
+      }
+
+      /* ---------------------------
+         Save student (compute scores)
+      ----------------------------*/
+      document
+        .getElementById("saveStudent")
+        .addEventListener("click", () => saveStudent());
+
+      function saveStudent() {
+        const name = document.getElementById("studentName").value.trim();
+        if (!name) {
+          alert("Öğrenci adı gerekli");
+          return;
+        }
+
+        const meta = {
+          name,
+          gpa: Number(document.getElementById("studentGPA").value) || null,
+          gender: document.getElementById("studentGender").value || null,
+          courseType: document.getElementById("courseType").value || null,
+          weeklyHours:
+            Number(document.getElementById("weeklyHours").value) || null,
+          learningResource:
+            document.getElementById("learningResource").value || null,
+          savedAt: new Date().toISOString(),
+        };
+
+        const responses = {};
+        rawQuestions.forEach((q) => {
+          const radios = document.getElementsByName("q-" + q.id);
+          let val = null;
+          radios.forEach((r) => {
+            if (r.checked) val = Number(r.value);
+          });
+          responses[q.index] = val;
+        });
+
+        const scores = {
+          VARK: { V: 0, A: 0, R: 0, K: 0 },
+          Kolb: { CE: 0, RO: 0, AC: 0, AE: 0 },
+        };
+
+        rawQuestions.forEach((q, i) => {
+          const resp = responses[q.index];
+          if (resp === null || resp === undefined) return;
+          const cat = (q.category || "").toLowerCase();
+          if (cat.includes("vark")) {
+            const map = ["V", "A", "R", "K"];
+            const key = map[resp] || map[resp % 4];
+            scores.VARK[key] += 1;
+          } else if (cat.includes("kolb")) {
+            const map = ["CE", "RO", "AC", "AE"];
+            const key = map[resp] || map[resp % 4];
+            scores.Kolb[key] += 1;
+          }
+        });
+
+        const varkDom =
+          Object.entries(scores.VARK).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+          null;
+
+        const { CE, RO, AC, AE } = scores.Kolb;
+        const kolbType = calculateKolbType(CE, RO, AC, AE);
+
+        const student = {
+          id: uid(),
+          meta,
+          responses,
+          scores,
+          dominant: { vark: varkDom, kolb: kolbType },
+        };
+
+        students.push(student);
+        localStorage.setItem("students_v1", JSON.stringify(students));
+        renderStudentsTable();
+        computeQuickSummary();
+        renderAllCharts();
+
+        alert("Öğrenci kaydedildi: " + meta.name);
+        document.getElementById("studentName").value = "";
+        document.getElementById("studentGPA").value = "";
+        document.getElementById("clearResponses").click();
+      }
+
+      /* ---------------------------
+         Render students table
+      ----------------------------*/
+      function renderStudentsTable() {
+        const el = document.getElementById("studentsTable");
+        if (!students.length) {
+          el.innerHTML = '<div class="muted">Henüz öğrenci yok.</div>';
+          return;
+        }
+        let html =
+          '<table class="min-w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Ad</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Zaman</th></tr></thead><tbody>';
+        students.forEach((s) => {
+          html += `<tr class="border-t"><td class="py-2">${
+            s.meta.name
+          }</td><td>${
+            s.meta.gpa === null ? "-" : s.meta.gpa.toFixed(2)
+          }</td><td>${s.dominant.vark || "-"}</td><td>${
+            s.dominant.kolb || "-"
+          }</td><td class="tiny">${new Date(
+            s.meta.savedAt,
+          ).toLocaleString()}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        el.innerHTML = html;
+      }
+
+      /* ---------------------------
+         Compute quick summary
+      ----------------------------*/
+      document.getElementById("computeAll").addEventListener("click", () => {
+        computeQuickSummary(true);
+      });
+
+      function computeQuickSummary(showAlert = false) {
+        if (!students.length) {
+          document.getElementById("quickSummary").innerText =
+            "Henüz öğrenci yok.";
+          return;
+        }
+        const gpas = students.map((s) =>
+          s.meta.gpa === null || s.meta.gpa === undefined ? NaN : s.meta.gpa,
+        );
+        const present = gpas.filter((v) => !isNaN(v));
+        const count = students.length;
+        const missingGPA = gpas.filter((v) => isNaN(v)).length;
+        const meanGPA = present.length ? ss.mean(present) : null;
+        const medianGPA = present.length ? ss.median(present) : null;
+        const stdGPA = present.length ? ss.standardDeviation(present) : null;
+
+        const vTotals = { V: 0, A: 0, R: 0, K: 0 };
+        const kolbTypeCounts = {
+          Diverger: 0,
+          Assimilator: 0,
+          Converger: 0,
+          Accommodator: 0,
+        };
+
+        students.forEach((s) => {
+          const sv = s.scores.VARK;
+          if (sv)
+            Object.keys(vTotals).forEach((k) => (vTotals[k] += sv[k] || 0));
+          if (s.dominant.kolb) {
+            kolbTypeCounts[s.dominant.kolb]++;
+          }
+        });
+
+        const quick = `Toplam öğrenci: ${count}
+      Eksik GPA: ${missingGPA}
+      Ortalama GPA: ${meanGPA ? meanGPA.toFixed(2) : "-"}
+      Medyan GPA: ${medianGPA ? medianGPA.toFixed(2) : "-"}
+      Std GPA: ${stdGPA ? stdGPA.toFixed(2) : "-"}
+      VARK toplamları: V=${vTotals.V}, A=${vTotals.A}, R=${vTotals.R}, K=${vTotals.K}
+      KOLB tipler: Div=${kolbTypeCounts.Diverger}, Assim=${
+        kolbTypeCounts.Assimilator
+      }, Conv=${kolbTypeCounts.Converger}, Accom=${
+        kolbTypeCounts.Accommodator
+      }`;
+
+        document.getElementById("quickSummary").innerText = quick;
+
+        const total = vTotals.V + vTotals.A + vTotals.R + vTotals.K || 1;
+
+        const visualShare = vTotals.V / total;
+        const auralShare = vTotals.A / total;
+        const readShare = vTotals.R / total;
+        const kinestheticShare = vTotals.K / total;
+
+        const THRESHOLD = 0.4;
+
+        let suggestion =
+          "No clearly dominant learning style is observed in the class. Maintain a balanced V-A-R-K instructional approach using varied teaching strategies. Reinforcing content through multiple modalities supports overall learning outcomes.";
+
+        const above = [];
+        if (visualShare >= THRESHOLD) above.push("V");
+        if (auralShare >= THRESHOLD) above.push("A");
+        if (readShare >= THRESHOLD) above.push("R");
+        if (kinestheticShare >= THRESHOLD) above.push("K");
+
+        if (above.length === 1) {
+          if (above[0] === "V")
+            suggestion =
+              "A strong preference for visual learning is evident in the class. Support instruction with graphs, diagrams, infographics, and short videos. Structuring key concepts through visual flowcharts helps students grasp relationships more quickly.";
+          else if (above[0] === "A")
+            suggestion =
+              "The class shows a clear tendency toward aural learning. Increase verbal explanations, discussions, and question–answer interactions. Short oral summaries and peer discussions enhance comprehension and retention.";
+          else if (above[0] === "R")
+            suggestion =
+              "Read/write learning preferences are prominent in the class. Provide well-structured texts, detailed lecture notes, and clear written instructions. Activities such as summarizing and brief written reflections deepen conceptual understanding.";
+          else if (above[0] === "K")
+            suggestion =
+              "Kinesthetic learning tendencies are pronounced in the class. Incorporate hands-on activities, experiments, and project-based tasks. Learning by doing and working on real-world problems significantly increases engagement.";
+        } else if (above.length > 1) {
+          suggestion =
+            "Multiple learning styles are strongly represented in the class. Design lessons that intentionally combine visual materials, verbal explanations, written resources, and practical activities. Rotating between modalities ensures inclusive and effective learning for all students.";
+        }
+
+        document.getElementById("autoSuggestion").innerText = suggestion;
+
+        if (showAlert)
+          alert(
+            "Tanımlayıcı istatistikler hesaplandı. Quick summary paneline bakın.",
+          );
+      }
+
+      /* ---------------------------
+         Statistical Helper Functions
+      ----------------------------*/
+      function contingencyTable(catA, catB) {
+        const aVals = Array.from(new Set(catA));
+        const bVals = Array.from(new Set(catB));
+        const table = Array(aVals.length)
+          .fill(0)
+          .map(() => Array(bVals.length).fill(0));
+        for (let i = 0; i < catA.length; i++) {
+          const a = catA[i],
+            b = catB[i];
+          const ai = aVals.indexOf(a),
+            bi = bVals.indexOf(b);
+          table[ai][bi] += 1;
+        }
+        return { table, aVals, bVals };
+      }
+
+      function chiSquareTest(table) {
+        const r = table.length,
+          c = table[0].length;
+        const rowSums = table.map((row) => row.reduce((s, x) => s + x, 0));
+        const colSums = Array(c)
+          .fill(0)
+          .map((_, j) => table.reduce((s, row) => s + row[j], 0));
+        const total = rowSums.reduce((a, b) => a + b, 0);
+        let chi2 = 0;
+        for (let i = 0; i < r; i++) {
+          for (let j = 0; j < c; j++) {
+            const expected = (rowSums[i] * colSums[j]) / total;
+            const obs = table[i][j];
+            if (expected > 0) chi2 += Math.pow(obs - expected, 2) / expected;
+          }
+        }
+        const dof = (r - 1) * (c - 1);
+        const p = chiSquarePValue(chi2, dof);
+        return { chi2, dof, p };
+      }
+
+      function chiSquarePValue(chi2, dof) {
+        if (dof <= 0) return 1;
+        function gammaLn(x) {
+          const cof = [
+            76.18009172947146, -86.50532032941677, 24.01409824083091,
+            -1.231739572450155, 0.001208650973866179, -0.000005395239384953,
+          ];
+          let y = x;
+          let tmp = x + 5.5;
+          tmp -= (x + 0.5) * Math.log(tmp);
+          let ser = 1.00000000019001;
+          for (let j = 0; j < 6; j++) ser += cof[j] / ++y;
+          return -tmp + Math.log((2.5066282746310005 * ser) / x);
+        }
+        function incompletaGamma(a, x) {
+          if (x < 0 || a <= 0) return 0;
+          if (x === 0) return 0;
+          if (x < a + 1) {
+            let sum = 1 / a;
+            let term = 1 / a;
+            for (let n = 1; n < 100; n++) {
+              term *= x / (a + n);
+              sum += term;
+              if (Math.abs(term) < 1e-10) break;
+            }
+            return sum * Math.exp(-x + a * Math.log(x) - gammaLn(a));
+          } else {
+            let b = x + 1 - a;
+            let c = 1 / 1e-30;
+            let d = 1 / b;
+            let h = d;
+            for (let i = 1; i < 100; i++) {
+              const an = -i * (i - a);
+              b += 2;
+              d = an * d + b;
+              if (Math.abs(d) < 1e-30) d = 1e-30;
+              c = b + an / c;
+              if (Math.abs(c) < 1e-30) c = 1e-30;
+              d = 1 / d;
+              const del = d * c;
+              h *= del;
+              if (Math.abs(del - 1) < 1e-10) break;
+            }
+            return 1 - h * Math.exp(-x + a * Math.log(x) - gammaLn(a));
+          }
+        }
+        return 1 - incompletaGamma(dof / 2, chi2 / 2);
+      }
+
+      function oneWayANOVA(groups) {
+        const validGroups = groups.filter((g) => g.length > 0);
+        if (validGroups.length < 2) return null;
+
+        const allData = validGroups.flat();
+        const grandMean = ss.mean(allData);
+        const n = allData.length;
+        const k = validGroups.length;
+
+        let ssBetween = 0;
+        validGroups.forEach((g) => {
+          const groupMean = ss.mean(g);
+          ssBetween += g.length * Math.pow(groupMean - grandMean, 2);
+        });
+
+        let ssWithin = 0;
+        validGroups.forEach((g) => {
+          const groupMean = ss.mean(g);
+          g.forEach((val) => {
+            ssWithin += Math.pow(val - groupMean, 2);
+          });
+        });
+
+        const dfBetween = k - 1;
+        const dfWithin = n - k;
+        const msBetween = ssBetween / dfBetween;
+        const msWithin = ssWithin / dfWithin;
+        const F = msBetween / msWithin;
+
+        const p = fTestPValue(F, dfBetween, dfWithin);
+
+        return {
+          F,
+          dfBetween,
+          dfWithin,
+          p,
+          groupMeans: validGroups.map(ss.mean),
+        };
+      }
+
+      function fTestPValue(F, df1, df2) {
+        if (F <= 0 || df1 <= 0 || df2 <= 0) return 1;
+        const x = df2 / (df2 + df1 * F);
+        return betaIncomplete(df2 / 2, df1 / 2, x);
+      }
+
+      function betaIncomplete(a, b, x) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        function betaLn(a, b) {
+          return gammaLn(a) + gammaLn(b) - gammaLn(a + b);
+        }
+        function gammaLn(x) {
+          const cof = [
+            76.18009172947146, -86.50532032941677, 24.01409824083091,
+            -1.231739572450155, 0.001208650973866179, -0.000005395239384953,
+          ];
+          let y = x;
+          let tmp = x + 5.5;
+          tmp -= (x + 0.5) * Math.log(tmp);
+          let ser = 1.00000000019001;
+          for (let j = 0; j < 6; j++) ser += cof[j] / ++y;
+          return -tmp + Math.log((2.5066282746310005 * ser) / x);
+        }
+        const bt =
+          Math.exp(a * Math.log(x) + b * Math.log(1 - x) - betaLn(a, b)) / a;
+        if (x < (a + 1) / (a + b + 2)) {
+          return (bt * betaContinuedFraction(a, b, x)) / a;
+        } else {
+          return 1 - (bt * betaContinuedFraction(b, a, 1 - x)) / b;
+        }
+      }
+
+      function betaContinuedFraction(a, b, x) {
+        const maxIterations = 100;
+        const epsilon = 1e-10;
+        const qab = a + b;
+        const qap = a + 1;
+        const qam = a - 1;
+        let c = 1;
+        let d = 1 - (qab * x) / qap;
+        if (Math.abs(d) < 1e-30) d = 1e-30;
+        d = 1 / d;
+        let h = d;
+        for (let m = 1; m <= maxIterations; m++) {
+          const m2 = 2 * m;
+          let aa = (m * (b - m) * x) / ((qam + m2) * (a + m2));
+          d = 1 + aa * d;
+          if (Math.abs(d) < 1e-30) d = 1e-30;
+          c = 1 + aa / c;
+          if (Math.abs(c) < 1e-30) c = 1e-30;
+          d = 1 / d;
+          h *= d * c;
+          aa = (-(a + m) * (qab + m) * x) / ((a + m2) * (qap + m2));
+          d = 1 + aa * d;
+          if (Math.abs(d) < 1e-30) d = 1e-30;
+          c = 1 + aa / c;
+          if (Math.abs(c) < 1e-30) c = 1e-30;
+          d = 1 / d;
+          const del = d * c;
+          h *= del;
+          if (Math.abs(del - 1) < epsilon) break;
+        }
+        return h;
+      }
+
+      function pearson(x, y) {
+        if (x.length !== y.length || x.length < 2) return null;
+        return ss.sampleCorrelation(x, y);
+      }
+
+      function spearman(x, y) {
+        if (x.length !== y.length || x.length < 2) return null;
+        function rank(arr) {
+          const sorted = arr.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+          const ranks = [];
+          for (let i = 0; i < sorted.length; i++) ranks[sorted[i][1]] = i + 1;
+          return ranks;
+        }
+        return pearson(rank(x), rank(y));
+      }
+
+      /* ---------------------------
+         Statistical tests
+      ----------------------------*/
+      document.getElementById("runTests").addEventListener("click", () => {
+        runStatTests(true);
+      });
+
+      function runStatTests(showAlert = false) {
+        if (!students.length) {
+          alert("Öğrenci yok.");
+          return;
+        }
+
+        let output = "=== İSTATİSTİKSEL TEST SONUÇLARI ===\n\n";
+
+        // 1. VARK ANALİZİ
+        output += "【 VARK MODELİ ANALİZİ 】\n";
+        output += "─".repeat(50) + "\n\n";
+
+        const courseTypes = students.map(
+          (s) => s.meta.courseType || "Bilinmiyor",
+        );
+        const varkDom = students.map((s) => s.dominant.vark || "Bilinmiyor");
+
+        const {
+          table: varkTable,
+          aVals: courseVals,
+          bVals: varkVals,
+        } = contingencyTable(courseTypes, varkDom);
+        const varkChi = chiSquareTest(varkTable);
+
+        output += `1. Chi-Square Testi (Ders Türü × VARK Dominant Stili)\n`;
+        output += `   χ² = ${varkChi.chi2.toFixed(4)}\n`;
+        output += `   df = ${varkChi.dof}\n`;
+        output += `   p-value = ${varkChi.p.toFixed(4)}\n`;
+        output += `   Yorum: ${
+          varkChi.p < 0.05
+            ? "İstatistiksel olarak ANLAMLI ilişki var (p < 0.05)"
+            : "İstatistiksel olarak anlamlı ilişki YOK (p ≥ 0.05)"
+        }\n\n`;
+
+        // VARK × GPA korelasyon
+        const varkScoresV = students.map((s) => s.scores.VARK.V || 0);
+        const gpas = students.map((s) => s.meta.gpa).filter((g) => g != null);
+        const varkScoresVWithGPA = students
+          .filter((s) => s.meta.gpa != null)
+          .map((s) => s.scores.VARK.V || 0);
+
+        if (gpas.length >= 3) {
+          const pearsonVark = pearson(varkScoresVWithGPA, gpas);
+          const spearmanVark = spearman(varkScoresVWithGPA, gpas);
+          output += `2. VARK Visual Skoru × GPA Korelasyonu\n`;
+          output += `   n = ${gpas.length}\n`;
+          output += `   Pearson r = ${pearsonVark ? pearsonVark.toFixed(4) : "—"}\n`;
+          output += `   Spearman ρ = ${spearmanVark ? spearmanVark.toFixed(4) : "—"}\n\n`;
+        } else {
+          output += `2. VARK × GPA Korelasyonu: Yetersiz veri (n < 3)\n\n`;
+        }
+
+        // 2. KOLB ANALİZİ
+        output += "【 KOLB MODELİ ANALİZİ 】\n";
+        output += "─".repeat(50) + "\n\n";
+
+        const kolbTypes = [
+          "Diverger",
+          "Assimilator",
+          "Converger",
+          "Accommodator",
+        ];
+        const kolbGroups = kolbTypes.map((type) =>
+          students
+            .filter((s) => s.dominant.kolb === type && s.meta.gpa != null)
+            .map((s) => s.meta.gpa),
+        );
+
+        const anova = oneWayANOVA(kolbGroups);
+        if (anova) {
+          output += `3. One-Way ANOVA (KOLB Tipi × GPA)\n`;
+          output += `   F(${anova.dfBetween}, ${anova.dfWithin}) = ${anova.F.toFixed(4)}\n`;
+          output += `   p-value = ${anova.p.toFixed(4)}\n`;
+          output += `   Yorum: ${
+            anova.p < 0.05
+              ? "KOLB tipleri arasında GPA açısından ANLAMLI fark var (p < 0.05)"
+              : "KOLB tipleri arasında GPA açısından anlamlı fark YOK (p ≥ 0.05)"
+          }\n\n`;
+          output += `   Grup Ortalamaları:\n`;
+          kolbTypes.forEach((type, i) => {
+            if (kolbGroups[i].length > 0) {
+              output += `   - ${type}: μ = ${anova.groupMeans[i].toFixed(2)} (n = ${
+                kolbGroups[i].length
+              })\n`;
+            }
+          });
+          output += "\n";
+        } else {
+          output += `3. One-Way ANOVA: Yetersiz veri (< 2 grup)\n\n`;
+        }
+
+        // Kolb AC-CE ekseni × GPA
+        const acMinusCE = students
+          .filter((s) => s.meta.gpa != null)
+          .map((s) => (s.scores.Kolb.AC || 0) - (s.scores.Kolb.CE || 0));
+        const gpasForKolb = students
+          .filter((s) => s.meta.gpa != null)
+          .map((s) => s.meta.gpa);
+
+        if (gpasForKolb.length >= 3) {
+          const pearsonKolb = pearson(acMinusCE, gpasForKolb);
+          output += `4. KOLB AC-CE Ekseni × GPA Korelasyonu\n`;
+          output += `   n = ${gpasForKolb.length}\n`;
+          output += `   Pearson r = ${pearsonKolb ? pearsonKolb.toFixed(4) : "—"}\n`;
+          output += `   (Pozitif r: Soyut kavramlaştırma yükseldikçe GPA artar)\n\n`;
+        } else {
+          output += `4. KOLB × GPA Korelasyonu: Yetersiz veri\n\n`;
+        }
+
+        output += "=== RAPOR SONU ===\n";
+
+        document.getElementById("statOutput").innerText = output;
+        populateAdminVarkDetails(varkChi, varkTable, courseVals, varkVals);
+        populateAdminKolbDetails(anova, kolbGroups, kolbTypes);
+
+        if (showAlert)
+          alert(
+            "İstatistiksel testler tamamlandı. Admin → Tüm İstatistikler sekmesine bakın.",
+          );
+      }
+
+      /* ---------------------------
+         Charts rendering
+      ----------------------------*/
+      function renderAllCharts() {
+        const vTotals = { V: 0, A: 0, R: 0, K: 0 };
+        const kolbTypeCounts = {
+          Diverger: 0,
+          Assimilator: 0,
+          Converger: 0,
+          Accommodator: 0,
+        };
+
+        students.forEach((s) => {
+          if (s.scores && s.scores.VARK)
+            Object.keys(vTotals).forEach(
+              (k) => (vTotals[k] += s.scores.VARK[k] || 0),
+            );
+          if (s.dominant.kolb) {
+            kolbTypeCounts[s.dominant.kolb]++;
+          }
+        });
+
+        // VARK bar
+        const vb = document.getElementById("varkBar").getContext("2d");
+        if (charts.varkBar) charts.varkBar.destroy();
+        charts.varkBar = new Chart(vb, {
+          type: "bar",
+          data: {
+            labels: ["Visual", "Aural", "Read/Write", "Kinesthetic"],
+            datasets: [
+              {
+                label: "VARK Dağılımı (Toplam Skorlar)",
+                data: [vTotals.V, vTotals.A, vTotals.R, vTotals.K],
+                backgroundColor: ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: true },
+              title: { display: true, text: "VARK Stil Dağılımı" },
+            },
+          },
+        });
+
+        // KOLB bar
+        const kb = document.getElementById("kolbBar").getContext("2d");
+        if (charts.kolbBar) charts.kolbBar.destroy();
+        charts.kolbBar = new Chart(kb, {
+          type: "bar",
+          data: {
+            labels: ["Diverger", "Assimilator", "Converger", "Accommodator"],
+            datasets: [
+              {
+                label: "KOLB Tip Dağılımı (Kişi Sayısı)",
+                data: [
+                  kolbTypeCounts.Diverger,
+                  kolbTypeCounts.Assimilator,
+                  kolbTypeCounts.Converger,
+                  kolbTypeCounts.Accommodator,
+                ],
+                backgroundColor: ["#8b5cf6", "#06b6d4", "#f59e0b", "#ef4444"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: true },
+              title: { display: true, text: "KOLB Öğrenme Tipi Dağılımı" },
+            },
+          },
+        });
+      }
+
+      /* ---------------------------
+         Admin modal logic
+      ----------------------------*/
+      document.getElementById("btnAdmin").addEventListener("click", () => {
+        document.getElementById("adminModal").classList.remove("hidden");
+        document.getElementById("adminModal").classList.add("flex");
+      });
+      document.getElementById("closeAdmin").addEventListener("click", () => {
+        document.getElementById("adminModal").classList.add("hidden");
+      });
+      document.getElementById("adminCancel").addEventListener("click", () => {
+        document.getElementById("adminModal").classList.add("hidden");
+      });
+      document.getElementById("adminLoginBtn").addEventListener("click", () => {
+        const pw = document.getElementById("adminPassword").value;
+        if (pw === "12345") {
+          document.getElementById("adminModal").classList.add("hidden");
+          document.getElementById("adminPanel").classList.remove("hidden");
+          activateTab("tab-list");
+          populateAdminStudents();
+          runStatTests(false);
+        } else alert("Hatalı şifre");
+      });
+      document.getElementById("adminClose").addEventListener("click", () => {
+        document.getElementById("adminPanel").classList.add("hidden");
+      });
+      document.getElementById("adminExport").addEventListener("click", () => {
+        const blob = new Blob(
+          [
+            JSON.stringify(
+              { students, rawQuestions, exportedAt: new Date().toISOString() },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json" },
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "class_report.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document
+        .getElementById("clearStorageBtn")
+        .addEventListener("click", () => {
+          if (
+            !confirm(
+              "Tüm öğrenci verilerini localStorage'dan silmek istediğinizden emin misiniz?",
+            )
+          )
+            return;
+          localStorage.removeItem("students_v1");
+          students = [];
+          renderStudentsTable();
+          populateAdminStudents();
+          renderAllCharts();
+          computeQuickSummary();
+          alert("students_v1 temizlendi.");
+        });
+
+      document.querySelectorAll(".tabBtn").forEach((btn) => {
+        btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+      });
+      function activateTab(tabId) {
+        document
+          .querySelectorAll(".tabContent")
+          .forEach((s) => s.classList.add("hidden"));
+        document.getElementById(tabId).classList.remove("hidden");
+      }
+
+      /* ---------------------------
+         Admin populators
+      ----------------------------*/
+      function populateAdminStudents() {
+        const el = document.getElementById("adminStudents");
+        if (!students.length) {
+          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          return;
+        }
+        let html =
+          '<table class="min-w-full text-sm"><thead><tr><th>Ad</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Zaman</th><th>Sil</th></tr></thead><tbody>';
+        students.forEach((s) => {
+          html += `<tr class="border-t"><td>${s.meta.name}</td><td>${
+            s.meta.gpa === null ? "-" : s.meta.gpa.toFixed(2)
+          }</td><td>${s.dominant.vark || "-"}</td><td>${
+            s.dominant.kolb || "-"
+          }</td><td class="tiny">${new Date(
+            s.meta.savedAt,
+          ).toLocaleString()}</td><td><button onclick="deleteAdminStudent('${s.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Sil</button></td></tr>`;
+        });
+        html += "</tbody></table>";
+        el.innerHTML = html;
+      }
+
+      function deleteAdminStudent(id) {
+        students = students.filter((s) => s.id !== id);
+        localStorage.setItem("students_v1", JSON.stringify(students));
+
+        populateAdminStudents();
+      }
+
+      function populateAdminVarkDetails(chi, table, aVals, bVals) {
+        const el = document.getElementById("adminVark");
+        if (!students.length) {
+          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          return;
+        }
+
+        const totals = { V: 0, A: 0, R: 0, K: 0 };
+        const dom = { V: 0, A: 0, R: 0, K: 0 };
+        students.forEach((s) => {
+          if (s.scores && s.scores.VARK)
+            Object.keys(totals).forEach(
+              (k) => (totals[k] += s.scores.VARK[k] || 0),
+            );
+          if (s.dominant && s.dominant.vark)
+            dom[s.dominant.vark] = (dom[s.dominant.vark] || 0) + 1;
+        });
+
+        let html = `<div class="card p-3">
+                <b>VARK Toplam Skorlar</b><br>
+                Visual: ${totals.V}<br>
+                Aural: ${totals.A}<br>
+                Read/Write: ${totals.R}<br>
+                Kinesthetic: ${totals.K}
+              </div>`;
+
+        html += `<div class="card p-3">
+                <b>VARK Baskın Dağılımı (Kişi)</b><br>
+                V: ${dom.V} | A: ${dom.A} | R: ${dom.R} | K: ${dom.K}
+              </div>`;
+
+        html += `<div class="card p-3 col-span-2">
+                <b>Chi-Square Testi Sonucu</b><br>
+                χ² = ${chi.chi2.toFixed(4)}, df = ${chi.dof}, p = ${chi.p.toFixed(4)}<br>
+                <span class="text-xs ${chi.p < 0.05 ? "text-green-600" : "text-gray-500"}">
+                  ${chi.p < 0.05 ? "✓ Anlamlı ilişki (p < 0.05)" : "✗ Anlamlı ilişki yok"}
+                </span>
+              </div>`;
+
+        html +=
+          '<div class="card p-3 col-span-2"><b>Kontinjensi Tablosu (Ders Türü × VARK)</b><br>';
+        html += '<table class="min-w-full text-sm mt-2"><thead><tr><th></th>';
+        bVals.forEach((b) => (html += `<th>${b}</th>`));
+        html += "</tr></thead><tbody>";
+        for (let i = 0; i < aVals.length; i++) {
+          html += `<tr class="border-t"><td class="font-medium">${aVals[i]}</td>`;
+          for (let j = 0; j < bVals.length; j++)
+            html += `<td class="text-center">${table[i][j]}</td>`;
+          html += "</tr>";
+        }
+        html += "</tbody></table></div>";
+
+        el.innerHTML = html;
+      }
+
+      function populateAdminKolbDetails(anova, groups, types) {
+        const el = document.getElementById("adminKolb");
+        if (!students.length) {
+          el.innerHTML = '<div class="muted">Öğrenci yok.</div>';
+          return;
+        }
+
+        const typeCounts = {
+          Diverger: 0,
+          Assimilator: 0,
+          Converger: 0,
+          Accommodator: 0,
+        };
+
+        students.forEach((s) => {
+          if (s.dominant.kolb) {
+            typeCounts[s.dominant.kolb]++;
+          }
+        });
+
+        let html = `<div class="card p-3">
+                <b>KOLB Tip Dağılımı</b><br>
+                Diverger: ${typeCounts.Diverger}<br>
+                Assimilator: ${typeCounts.Assimilator}<br>
+                Converger: ${typeCounts.Converger}<br>
+                Accommodator: ${typeCounts.Accommodator}
+              </div>`;
+
+        if (anova) {
+          html += `<div class="card p-3">
+                  <b>ANOVA Testi (KOLB Tip × GPA)</b><br>
+                  F(${anova.dfBetween}, ${anova.dfWithin}) = ${anova.F.toFixed(4)}<br>
+                  p-value = ${anova.p.toFixed(4)}<br>
+                  <span class="text-xs ${anova.p < 0.05 ? "text-green-600" : "text-gray-500"}">
+                    ${anova.p < 0.05 ? "✓ Anlamlı fark var (p < 0.05)" : "✗ Anlamlı fark yok"}
+                  </span>
+                </div>`;
+
+          html +=
+            '<div class="card p-3 col-span-2"><b>Grup Ortalamaları (GPA)</b><br>';
+          html +=
+            '<table class="min-w-full text-sm mt-2"><thead><tr><th>KOLB Tipi</th><th>n</th><th>Ortalama GPA</th></tr></thead><tbody>';
+          types.forEach((type, i) => {
+            if (groups[i].length > 0) {
+              html += `<tr class="border-t"><td>${type}</td><td class="text-center">${
+                groups[i].length
+              }</td><td class="text-center">${anova.groupMeans[i].toFixed(2)}</td></tr>`;
+            }
+          });
+          html += "</tbody></table></div>";
+        } else {
+          html += `<div class="card p-3"><b>ANOVA Testi</b><br>Yetersiz veri (< 2 grup)</div>`;
+        }
+
+        el.innerHTML = html;
+      }
+
+      /* ---------------------------
+          Import JSON
+        ----------------------------*/
+      document.getElementById("importJSON").addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const fileContent = e.target.result;
+          try {
+            const jsonObject = JSON.parse(fileContent);
+            const students = jsonObject?.students;
+            if (!students) return;
+
+            const lsOldStudents = JSON.parse(
+              localStorage.getItem("students_v1") ?? "[]",
+            );
+            localStorage.setItem(
+              "students_v1",
+              JSON.stringify([...lsOldStudents, ...students]),
+            );
+          } catch (error) {
+            console.error("Error parsing JSON file:", error);
+          }
+        };
+        reader.readAsText(file);
+        window.location.reload();
+      });
+
+      /* ---------------------------
+         Export CSV / JSON
+      ----------------------------*/
+      document.getElementById("exportCSV").addEventListener("click", () => {
+        if (!students.length) {
+          alert("Öğrenci yok.");
+          return;
+        }
+        const header = [
+          "name",
+          "gpa",
+          "gender",
+          "courseType",
+          "weeklyHours",
+          "learningResource",
+          "varkV",
+          "varkA",
+          "varkR",
+          "varkK",
+          "varkDominant",
+          "kolbCE",
+          "kolbRO",
+          "kolbAC",
+          "kolbAE",
+          "kolbType",
+          "savedAt",
+        ];
+        const rows = students.map((s) => [
+          s.meta.name,
+          s.meta.gpa === null ? "" : s.meta.gpa,
+          s.meta.gender || "",
+          s.meta.courseType || "",
+          s.meta.weeklyHours || "",
+          s.meta.learningResource || "",
+          s.scores.VARK.V,
+          s.scores.VARK.A,
+          s.scores.VARK.R,
+          s.scores.VARK.K,
+          s.dominant.vark || "",
+          s.scores.Kolb.CE,
+          s.scores.Kolb.RO,
+          s.scores.Kolb.AC,
+          s.scores.Kolb.AE,
+          s.dominant.kolb || "",
+          s.meta.savedAt,
+        ]);
+        let csv =
+          header.join(",") +
+          "\n" +
+          rows
+            .map((r) => r.map((v) => `"${String(v || "")}"`).join(","))
+            .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "students.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("exportAll").addEventListener("click", () => {
+        const payload = {
+          students,
+          questions: rawQuestions,
+          exportedAt: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "report.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      /* ---------------------------
+         Init
+      ----------------------------*/
+      function init() {
+        renderQuestions();
+        renderStudentsTable();
+        renderAllCharts();
+        computeQuickSummary();
+      }
+      init();
+    </script>
+  </body>
+</html>
