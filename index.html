@@ -3,12 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Learning Styles & Class Analysis – Single Page</title>
+    <title>Learning Styles & Class Analysis</title>
 
-    <!-- Tailwind CDN for professional look -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
@@ -98,8 +96,7 @@
           <div id="studentCard" class="card">
             <h2 class="text-lg font-medium">Student Information & Test</h2>
             <p class="muted">
-              Enter name and optional GPA, then start the test. Questions will
-              be loaded automatically from Excel.
+              Enter name and optional GPA, then start the test.
             </p>
 
             <div class="grid grid-cols-2 gap-3 mt-3">
@@ -214,9 +211,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               <div class="card p-3">
                 <h4 class="font-medium">Class Quick Summary</h4>
-                <div id="quickSummary" class="muted mt-2">
-                  No data yet.
-                </div>
+                <div id="quickSummary" class="muted mt-2">No data yet.</div>
               </div>
 
               <div class="card p-3">
@@ -282,11 +277,11 @@
         id="adminPanel"
         class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-auto"
       >
-        <div class="max-w-[1250px] w-[95%] mx-auto mt-8 bg-white rounded-lg p-6 mb-8 shadow-lg">
+        <div
+          class="max-w-[1250px] w-[95%] mx-auto mt-8 bg-white rounded-lg p-6 mb-8 shadow-lg"
+        >
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold">
-              Admin Panel — Class Analyses
-            </h2>
+            <h2 class="text-xl font-semibold">Admin Panel — Class Analyses</h2>
             <div class="flex gap-2">
               <button
                 id="clearStorageBtn"
@@ -406,7 +401,7 @@
           const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
           rawQuestions = json.map((r, idx) => {
-          const qText =
+            const qText =
               r.question ||
               r.soru ||
               r.Question ||
@@ -521,11 +516,20 @@
 
       // Decide which Kolb learning type is dominant
       function calculateKolbType(CE, RO, AC, AE) {
-        if (CE > AC && RO > AE) return "Diverger";
-        if (AC > CE && RO > AE) return "Assimilator";
-        if (AC > CE && AE > RO) return "Converger";
-        if (CE > AC && AE > RO) return "Accommodator";
-        return null;
+        const ac_ce = AC - CE;
+        const ae_ro = AE - RO;
+
+        if (ac_ce > 0 && ae_ro > 0) {
+          return "Converger";
+        } else if (ac_ce > 0 && ae_ro <= 0) {
+          return "Assimilator";
+        } else if (ac_ce <= 0 && ae_ro > 0) {
+          return "Accommodator";
+        } else if (ac_ce <= 0 && ae_ro <= 0) {
+          return "Diverger";
+        }
+
+        return "Diverger";
       }
 
       // Read answers, calculate scores and store the student
@@ -582,9 +586,11 @@
           }
         });
 
+        const entries = Object.entries(scores.VARK).sort((a, b) => b[1] - a[1]);
         const varkDom =
-          Object.entries(scores.VARK).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-          null;
+          entries.filter((e) => e[1] === entries[0][1]).length > 1
+            ? "Multimodal"
+            : entries[0][0];
 
         const { CE, RO, AC, AE } = scores.Kolb;
         const kolbType = calculateKolbType(CE, RO, AC, AE);
@@ -609,9 +615,7 @@
         document.getElementById("clearResponses").click();
       }
 
-      /* ---------------------------
-         Render students table
-      ----------------------------*/
+      // Render students table
       function renderStudentsTable() {
         const el = document.getElementById("studentsTable");
         if (!students.length) {
@@ -685,47 +689,59 @@
 
         document.getElementById("quickSummary").innerText = quick;
 
-        const total = vTotals.V + vTotals.A + vTotals.R + vTotals.K || 1;
+        const totalRaw = vTotals.V + vTotals.A + vTotals.R + vTotals.K;
+        const total = totalRaw === 0 ? 1 : totalRaw;
+        const vShare = vTotals.V / total;
+        const aShare = vTotals.A / total;
+        const rShare = vTotals.R / total;
+        const kShare = vTotals.K / total;
 
-        const visualShare = vTotals.V / total;
-        const auralShare = vTotals.A / total;
-        const readShare = vTotals.R / total;
-        const kinestheticShare = vTotals.K / total;
+        const lowGpaGroup = students.filter(
+          (s) => s.meta.gpa !== null && s.meta.gpa < 60,
+        );
+        const hasRisk = lowGpaGroup.length > 0;
 
         const THRESHOLD = 0.4;
-
-        let suggestion =
-          "No clearly dominant learning style is observed in the class. Maintain a balanced V-A-R-K instructional approach using varied teaching strategies. Reinforcing content through multiple modalities supports overall learning outcomes.";
-
         const above = [];
-        if (visualShare >= THRESHOLD) above.push("V");
-        if (auralShare >= THRESHOLD) above.push("A");
-        if (readShare >= THRESHOLD) above.push("R");
-        if (kinestheticShare >= THRESHOLD) above.push("K");
+
+        if (vShare >= THRESHOLD) above.push("V");
+        if (aShare >= THRESHOLD) above.push("A");
+        if (rShare >= THRESHOLD) above.push("R");
+        if (kShare >= THRESHOLD) above.push("K");
+
+        let finalSuggestion = "";
 
         if (above.length === 1) {
-          if (above[0] === "V")
-            suggestion =
-              "A strong preference for visual learning is evident in the class. Support instruction with graphs, diagrams, infographics, and short videos. Structuring key concepts through visual flowcharts helps students grasp relationships more quickly.";
-          else if (above[0] === "A")
-            suggestion =
-              "The class shows a clear tendency toward aural learning. Increase verbal explanations, discussions, and question–answer interactions. Short oral summaries and peer discussions enhance comprehension and retention.";
-          else if (above[0] === "R")
-            suggestion =
-              "Read/write learning preferences are prominent in the class. Provide well-structured texts, detailed lecture notes, and clear written instructions. Activities such as summarizing and brief written reflections deepen conceptual understanding.";
-          else if (above[0] === "K")
-            suggestion =
-              "Kinesthetic learning tendencies are pronounced in the class. Incorporate hands-on activities, experiments, and project-based tasks. Learning by doing and working on real-world problems significantly increases engagement.";
-        } else if (above.length > 1) {
-          suggestion =
-            "Multiple learning styles are strongly represented in the class. Design lessons that intentionally combine visual materials, verbal explanations, written resources, and practical activities. Rotating between modalities ensures inclusive and effective learning for all students.";
+          const style = above[0];
+
+          const styleFullNames = {
+            V: "Visual",
+            A: "Aural",
+            R: "Read/Write",
+            K: "Kinesthetic",
+          };
+          const messages = {
+            V: "Most students in the class seem to learn better through visual materials. Using diagrams, charts, and simple visual explanations will likely make the lessons clearer.",
+            A: "Many students prefer learning by listening. Including discussions, verbal explanations, and short peer conversations may improve their understanding.",
+            R: "The group shows a noticeable tendency toward reading and writing. Providing written materials, structured notes, and short writing tasks can support learning.",
+            K: "A large part of the class learns best by doing. Hands-on activities, simple simulations, and practice-based tasks are expected to be more effective.",
+          };
+
+          finalSuggestion = messages[style];
+
+          if (hasRisk) {
+            finalSuggestion += ` \n\n⚠️ Note: Although ${styleFullNames[style]} is dominant, clustering shows some students are struggling with low GPA. Supplement your lessons with additional practical support for this group.`;
+          }
+        } else {
+          finalSuggestion =
+            "The class demonstrates a multimodal learning pattern, indicating that a combination of instructional strategies is likely to be more appropriate than a single dominant approach.";
         }
 
-        document.getElementById("autoSuggestion").innerText = suggestion;
+        document.getElementById("autoSuggestion").innerText = finalSuggestion;
 
         if (showAlert)
           alert(
-            "Tanımlayıcı istatistikler hesaplandı. Quick summary paneline bakın.",
+            "Analysis complete! You can check the details in the Quick Summary panel.",
           );
       }
 
@@ -943,13 +959,9 @@
         if (!points.length || k <= 1) return null;
         if (points.length < k) k = points.length;
 
-        // initialise centroids as random distinct points
         const centroids = [];
-        const used = new Set();
-        while (centroids.length < k) {
-          const idx = Math.floor(Math.random() * points.length);
-          if (used.has(idx)) continue;
-          used.add(idx);
+        for (let i = 0; i < k; i++) {
+          const idx = Math.floor((i * points.length) / k);
           centroids.push({ x: points[idx].x, y: points[idx].y });
         }
 
@@ -1000,9 +1012,7 @@
         return { centroids, assignments, k };
       }
 
-      /* ---------------------------
-         Statistical tests
-      ----------------------------*/
+      //Statistical tests
       document.getElementById("runTests").addEventListener("click", () => {
         runStatTests(true);
       });
@@ -1010,7 +1020,9 @@
       function runStatTests(showAlert = false) {
         if (!students.length) {
           if (showAlert) {
-            alert("No students. Please add at least one student before running tests.");
+            alert(
+              "No students. Please add at least one student before running tests.",
+            );
           }
           document.getElementById("statOutput").innerText =
             "No students in the dataset. Statistical tests cannot be computed.";
@@ -1024,9 +1036,7 @@
         output += "─".repeat(50) + "\n\n";
 
         // 1.1 Course Type × Dominant VARK (Chi-square)
-        const courseTypes = students.map(
-          (s) => s.meta.courseType || "Unknown",
-        );
+        const courseTypes = students.map((s) => s.meta.courseType || "Unknown");
         const varkDom = students.map((s) => s.dominant.vark || "Unknown");
 
         const {
@@ -1036,15 +1046,36 @@
         } = contingencyTable(courseTypes, varkDom);
         const varkChi = chiSquareTest(varkTable);
 
+        const multimodalCount = varkDom.filter(
+          (v) => v === "Multimodal",
+        ).length;
+        const multiPercent =
+          varkDom.length > 0
+            ? ((multimodalCount / varkDom.length) * 100).toFixed(1)
+            : 0;
+
+        let insightMsg = "";
+        if (Number(multiPercent) > 15) {
+          insightMsg =
+            multiPercent +
+            "% of your class is Multimodal. This suggests a strong need for varied instructional materials.";
+        } else {
+          insightMsg =
+            "Only " +
+            multiPercent +
+            "% of your class is Multimodal. You can primarily focus on the dominant learning styles of the majority.";
+        }
+
         output += `1.1 Chi-square (Course Type × Dominant VARK)\n`;
         output += `    χ² = ${varkChi.chi2.toFixed(4)}\n`;
         output += `    df = ${varkChi.dof}\n`;
         output += `    p-value = ${varkChi.p.toFixed(4)}\n`;
-        output += `    Note: ${
+        output += `    Observation: ${
           varkChi.p < 0.05
             ? "There is a statistically significant association between course type and dominant VARK style (p < 0.05)."
             : "No statistically significant association was detected between course type and dominant VARK style (p ≥ 0.05)."
         }\n\n`;
+        output += "    Insight: " + insightMsg + "\n\n";
 
         // 1.2 Preferred learning resource × Dominant VARK (Chi-square)
         const lrForVarkA = [];
@@ -1069,7 +1100,7 @@
           output += `    χ² = ${lrVarkChi.chi2.toFixed(4)}\n`;
           output += `    df = ${lrVarkChi.dof}\n`;
           output += `    p-value = ${lrVarkChi.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             lrVarkChi.p < 0.05
               ? "Students’ preferred learning resources and their dominant VARK styles are related in a statistically significant way (p < 0.05)."
               : "No clear statistical link was found between preferred learning resource and dominant VARK style (p ≥ 0.05)."
@@ -1079,28 +1110,44 @@
           output += `    Not enough matched data (missing learning resource or VARK type).\n\n`;
         }
 
-        // 1.3 VARK Visual score × GPA correlation
+        // 1.3 VARK Scores × GPA correlation
         const gpas = students.map((s) => s.meta.gpa).filter((g) => g != null);
-        const varkScoresVWithGPA = students
-          .filter((s) => s.meta.gpa != null)
-          .map((s) => s.scores.VARK.V || 0);
 
         if (gpas.length >= 3) {
-          const pearsonVark = pearson(varkScoresVWithGPA, gpas);
-          const spearmanVark = spearman(varkScoresVWithGPA, gpas);
-          output += `1.3 Correlation (VARK Visual Score × GPA)\n`;
-          output += `    n = ${gpas.length}\n`;
-          output += `    Pearson r = ${
-            pearsonVark || pearsonVark === 0 ? pearsonVark.toFixed(4) : "—"
-          }\n`;
-          output += `    Spearman ρ = ${
-            spearmanVark || spearmanVark === 0
-              ? spearmanVark.toFixed(4)
-              : "—"
-          }\n`;
-          output += `    Note: Values near zero mean almost no linear relationship between visual scores and GPA in this sample.\n\n`;
+          output += `1.3 VARK Styles × GPA Correlation Analysis\n`;
+          output += "─".repeat(50) + "\n\n";
+
+          const varkStyles = [
+            { key: "V", label: "Visual" },
+            { key: "A", label: "Aural" },
+            { key: "R", label: "Read/Write" },
+            { key: "K", label: "Kinesthetic" },
+          ];
+
+          varkStyles.forEach((style) => {
+            const styleScores = students
+              .filter((s) => s.meta.gpa != null)
+              .map((s) => s.scores.VARK[style.key] || 0);
+
+            const r = pearson(styleScores, gpas);
+            const rho = spearman(styleScores, gpas);
+            const absR = Math.abs(r);
+
+            let varkNote = "";
+            if (absR < 0.2) {
+              varkNote = "Negligible or no linear relationship.";
+            } else if (r >= 0.2) {
+              varkNote = `Positive correlation: Higher ${style.label} scores tend to align with higher GPAs.`;
+            } else {
+              varkNote = `Negative correlation: Higher ${style.label} scores are associated with lower GPAs in this group.`;
+            }
+
+            output += `[${style.label} × GPA]:\n`;
+            output += `    Pearson r = ${r.toFixed(4)}, Spearman ρ = ${rho.toFixed(4)}\n`;
+            output += `    Analysis Note: ${varkNote}\n\n`;
+          });
         } else {
-          output += `1.3 Correlation (VARK Visual Score × GPA)\n`;
+          output += `1.3 VARK Styles × GPA Correlation\n`;
           output += `    Not enough data (n < 3 with valid GPA).\n\n`;
         }
 
@@ -1125,7 +1172,7 @@
           output += `2.1 One-way ANOVA (KOLB Type × GPA)\n`;
           output += `    F(${anovaGpaKolb.dfBetween}, ${anovaGpaKolb.dfWithin}) = ${anovaGpaKolb.F.toFixed(4)}\n`;
           output += `    p-value = ${anovaGpaKolb.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             anovaGpaKolb.p < 0.05
               ? "Mean GPA differs significantly between at least two KOLB types (p < 0.05)."
               : "No statistically significant GPA differences were observed between KOLB types (p ≥ 0.05)."
@@ -1144,25 +1191,53 @@
           output += `    Not enough data (need at least 2 KOLB groups with valid GPA).\n\n`;
         }
 
-        // 2.2 Kolb AC–CE axis × GPA
-        const acMinusCE = students
-          .filter((s) => s.meta.gpa != null)
-          .map((s) => (s.scores.Kolb.AC || 0) - (s.scores.Kolb.CE || 0));
-        const gpasForKolb = students
-          .filter((s) => s.meta.gpa != null)
-          .map((s) => s.meta.gpa);
+        // --- 2. KOLB AXES ANALYSIS ---
+
+        const kolbData = students.filter((s) => s.meta.gpa != null);
+        const gpasForKolb = kolbData.map((s) => s.meta.gpa);
+
+        const acMinusCE = kolbData.map(
+          (s) => (s.scores.Kolb.AC || 0) - (s.scores.Kolb.CE || 0),
+        );
+        const aeMinusRO = kolbData.map(
+          (s) => (s.scores.Kolb.AE || 0) - (s.scores.Kolb.RO || 0),
+        );
 
         if (gpasForKolb.length >= 3) {
-          const pearsonKolb = pearson(acMinusCE, gpasForKolb);
+          // 2.2 AC–CE Axis Analysis
+          const rAcCe = pearson(acMinusCE, gpasForKolb);
+          const absRAcCe = Math.abs(rAcCe);
+          let interpAcCe =
+            absRAcCe < 0.1
+              ? "No significant linear association was detected between the observed parameters."
+              : `A ${absRAcCe < 0.3 ? "weak" : "moderate"} ${rAcCe > 0 ? "positive" : "negative"} correlation exists. ${
+                  rAcCe > 0
+                    ? "Abstract learners (AC) tend to have higher GPAs."
+                    : "Concrete learners (CE) perform better."
+                }`;
+
           output += `2.2 Correlation (KOLB AC–CE Axis × GPA)\n`;
-          output += `    n = ${gpasForKolb.length}\n`;
-          output += `    Pearson r = ${
-            pearsonKolb || pearsonKolb === 0 ? pearsonKolb.toFixed(4) : "—"
-          }\n`;
-          output += `    Interpretation: A positive r suggests that a stronger tendency toward abstract conceptualisation (AC over CE) is associated with higher GPA.\n\n`;
+          output += `    n = ${gpasForKolb.length} | Pearson r = ${rAcCe.toFixed(4)}\n`;
+          output += `    Analysis Note: ${interpAcCe}\n\n`;
+
+          // 2.3 AE–RO Axis Analysis
+          const rAeRo = pearson(aeMinusRO, gpasForKolb);
+          const absRAeRo = Math.abs(rAeRo);
+          let interpAeRo =
+            absRAeRo < 0.1
+              ? "No significant linear association was detected between the observed parameters."
+              : `A ${absRAeRo < 0.3 ? "weak" : "moderate"} ${rAeRo > 0 ? "positive" : "negative"} correlation exists. ${
+                  rAeRo > 0
+                    ? "Active learners (AE) tend to have higher GPAs."
+                    : "Reflective learners (RO) perform better."
+                }`;
+
+          output += `2.3 Correlation (KOLB AE–RO Axis × GPA)\n`;
+          output += `    n = ${gpasForKolb.length} | Pearson r = ${rAeRo.toFixed(4)}\n`;
+          output += `    Analysis Note: ${interpAeRo}\n\n`;
         } else {
-          output += `2.2 Correlation (KOLB AC–CE Axis × GPA)\n`;
-          output += `    Not enough data (n < 3 with valid GPA).\n\n`;
+          output += `2.2 & 2.3 KOLB Axes Analysis\n`;
+          output += `    Not enough data (n < 3).\n\n`;
         }
 
         // 3. WEEKLY STUDY HOURS ANALYSES
@@ -1182,24 +1257,42 @@
         if (whForGpa.length >= 3) {
           const pearsonWh = pearson(whForGpa, gpaForWh);
           const spearmanWh = spearman(whForGpa, gpaForWh);
+          const r = pearsonWh;
+          const absR = Math.abs(r);
+
+          let strength = "";
+          let direction = r > 0 ? "positive" : "negative";
+
+          if (absR < 0.1) strength = "negligible (no relationship)";
+          else if (absR < 0.3) strength = "small/weak";
+          else if (absR < 0.5) strength = "medium/moderate";
+          else strength = "large/strong";
+
+          let interpWh = "";
+          if (absR < 0.1) {
+            interpWh =
+              "There is no discernible linear relationship between study hours and GPA.";
+          } else {
+            interpWh = `There is a ${strength} ${direction} correlation. ${
+              r > 0
+                ? "Generally, more study hours align with higher academic performance."
+                : "Surprisingly, increased study hours do not correlate with higher GPAs in this sample."
+            }`;
+          }
+
           output += `3.1 Correlation (Weekly Study Hours × GPA)\n`;
           output += `    n = ${whForGpa.length}\n`;
-          output += `    Pearson r = ${
-            pearsonWh || pearsonWh === 0 ? pearsonWh.toFixed(4) : "—"
-          }\n`;
-          output += `    Spearman ρ = ${
-            spearmanWh || spearmanWh === 0
-              ? spearmanWh.toFixed(4)
-              : "—"
-          }\n`;
-          output += `    Interpretation: Positive coefficients indicate that, in this sample, students reporting more weekly study hours also tend to have higher GPA.\n\n`;
+          output += `    Pearson r = ${r.toFixed(4)}\n`;
+          output += `    Spearman ρ = ${spearmanWh.toFixed(4)}\n`;
+          output += `    Analysis Note: ${interpWh}\n`;
+          output += `    Observation: Results are descriptive for this sample (n=${whForGpa.length}).\n\n`;
         } else {
           output += `3.1 Correlation (Weekly Study Hours × GPA)\n`;
-          output += `    Not enough data (n < 3 with both weekly hours and GPA).\n\n`;
+          output += `    Not enough data (n < 3).\n\n`;
         }
 
         // 3.2 Weekly hours × dominant VARK (ANOVA)
-        const varkCats = ["V", "A", "R", "K"];
+        const varkCats = ["V", "A", "R", "K", "Multimodal"];
         const varkHourGroups = varkCats.map((cat) =>
           students
             .filter(
@@ -1213,7 +1306,7 @@
           output += `3.2 One-way ANOVA (Dominant VARK × Weekly Study Hours)\n`;
           output += `    F(${anovaWhVark.dfBetween}, ${anovaWhVark.dfWithin}) = ${anovaWhVark.F.toFixed(4)}\n`;
           output += `    p-value = ${anovaWhVark.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             anovaWhVark.p < 0.05
               ? "Average weekly study hours differ significantly between at least two VARK groups (p < 0.05)."
               : "No statistically significant differences in weekly study hours were found between VARK groups (p ≥ 0.05)."
@@ -1221,9 +1314,9 @@
           output += `    Group means (hours):\n`;
           varkCats.forEach((cat, i) => {
             if (varkHourGroups[i].length > 0) {
-              output += `    - ${cat}: μ = ${anovaWhVark.groupMeans[
-                i
-              ].toFixed(2)} (n = ${varkHourGroups[i].length})\n`;
+              output += `    - ${cat}: μ = ${anovaWhVark.groupMeans[i].toFixed(
+                2,
+              )} (n = ${varkHourGroups[i].length})\n`;
             }
           });
           output += "\n";
@@ -1246,7 +1339,7 @@
           output += `3.3 One-way ANOVA (KOLB Type × Weekly Study Hours)\n`;
           output += `    F(${anovaWhKolb.dfBetween}, ${anovaWhKolb.dfWithin}) = ${anovaWhKolb.F.toFixed(4)}\n`;
           output += `    p-value = ${anovaWhKolb.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             anovaWhKolb.p < 0.05
               ? "Average weekly study hours differ significantly between at least two KOLB types (p < 0.05)."
               : "No statistically significant differences in weekly study hours were found between KOLB types (p ≥ 0.05)."
@@ -1254,9 +1347,9 @@
           output += `    Group means (hours):\n`;
           kolbTypes.forEach((type, i) => {
             if (kolbHourGroups[i].length > 0) {
-              output += `    - ${type}: μ = ${anovaWhKolb.groupMeans[
-                i
-              ].toFixed(2)} (n = ${kolbHourGroups[i].length})\n`;
+              output += `    - ${type}: μ = ${anovaWhKolb.groupMeans[i].toFixed(
+                2,
+              )} (n = ${kolbHourGroups[i].length})\n`;
             }
           });
           output += "\n";
@@ -1292,7 +1385,7 @@
           output += `    χ² = ${genderVarkChi.chi2.toFixed(4)}\n`;
           output += `    df = ${genderVarkChi.dof}\n`;
           output += `    p-value = ${genderVarkChi.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             genderVarkChi.p < 0.05
               ? "Learning style preferences (VARK) differ by gender in a statistically significant way (p < 0.05)."
               : "No statistically significant association was found between gender and dominant VARK style (p ≥ 0.05)."
@@ -1325,7 +1418,7 @@
           output += `    χ² = ${genderKolbChi.chi2.toFixed(4)}\n`;
           output += `    df = ${genderKolbChi.dof}\n`;
           output += `    p-value = ${genderKolbChi.p.toFixed(4)}\n`;
-          output += `    Note: ${
+          output += `    Observation: ${
             genderKolbChi.p < 0.05
               ? "KOLB learning types are distributed differently across genders (p < 0.05)."
               : "No statistically significant association was found between gender and KOLB type (p ≥ 0.05)."
@@ -1335,10 +1428,20 @@
           output += `    Not enough data (gender or KOLB type missing).\n\n`;
         }
 
-        // 5. Simple clustering on GPA and dominant VARK (exploratory)
-        const varkOrder = ["V", "A", "R", "K"];
+        // --- 5. STUDENT PROFILING: K-MEANS CLUSTERING ---
+        output += "【 STUDENT PROFILING: K-MEANS CLUSTERING 】\n";
+        output += "Method: K-Means (Normalized GPA & Learning Styles)\n";
+        output += "─".repeat(50) + "\n\n";
+
+        // 5. VARK CLUSTERING ANALYSIS (WITH 1st & 2nd DOMINANTS)
+        const varkOrder = ["V", "A", "R", "K", "Multimodal"];
         const clusterSource = students
-          .filter((s) => s.meta.gpa != null && s.dominant.vark)
+          .filter(
+            (s) =>
+              s.meta.gpa != null &&
+              s.dominant.vark &&
+              varkOrder.includes(s.dominant.vark),
+          )
           .map((s) => ({
             gpa: s.meta.gpa,
             vark: s.dominant.vark,
@@ -1346,10 +1449,8 @@
 
         if (clusterSource.length >= 4) {
           const gList = clusterSource.map((d) => d.gpa);
-          const vNumList = clusterSource.map((d) => {
-            const idx = varkOrder.indexOf(d.vark);
-            return idx === -1 ? 0 : idx;
-          });
+          const vNumList = clusterSource.map((d) => varkOrder.indexOf(d.vark));
+
           const gMean = ss.mean(gList);
           const vMean = ss.mean(vNumList);
           const gStd = ss.standardDeviation(gList) || 1;
@@ -1360,54 +1461,136 @@
             y: (vNumList[i] - vMean) / vStd,
           }));
 
-          const k = Math.min(3, normPoints.length);
-          const km = kMeans2D(normPoints, k);
+          const kCount = Math.min(3, normPoints.length);
+
+          const km = kMeans2D(normPoints, kCount);
 
           if (km) {
-            const clusters = Array(km.k)
-              .fill(0)
-              .map(() => ({
-                count: 0,
-                gpaSum: 0,
-                varkCounts: { V: 0, A: 0, R: 0, K: 0 },
-              }));
+            const clusters = Array.from({ length: km.k }, () => ({
+              count: 0,
+              gpaSum: 0,
+              varkCounts: { V: 0, A: 0, R: 0, K: 0, Multimodal: 0 },
+            }));
 
             km.assignments.forEach((cIdx, i) => {
               const c = clusters[cIdx];
               c.count++;
               c.gpaSum += clusterSource[i].gpa;
               const label = clusterSource[i].vark;
-              if (label && c.varkCounts[label] != null) {
-                c.varkCounts[label] += 1;
+              if (label && c.varkCounts[label] !== undefined) {
+                c.varkCounts[label]++;
               }
             });
 
-            output += "【 CLUSTERING (EXPLORATORY) 】\n";
-            output +=
-              "A simple k-means clustering (k up to 3) was applied on standardised GPA and dominant VARK style (encoded numerically).\n";
-            output +=
-              "Clusters roughly group students by similar performance (GPA) and learning preference (VARK).\n\n";
-
+            output += "【 MULTIVARIATE CLUSTERING: GPA & VARK MODELS 】\n";
             clusters.forEach((c, idx) => {
-              if (!c.count) return;
+              if (c.count === 0) return;
               const meanG = c.gpaSum / c.count;
-              const domVarkEntry = Object.entries(c.varkCounts).sort(
-                (a, b) => b[1] - a[1],
-              )[0];
-              const domVark = domVarkEntry ? domVarkEntry[0] : "-";
-              output += `Cluster ${idx + 1}: n = ${
-                c.count
-              }, mean GPA ≈ ${meanG.toFixed(
-                2,
-              )}, most frequent VARK ≈ ${domVark}\n`;
-            });
 
+              const sortedStyles = Object.entries(c.varkCounts)
+                .filter((entry) => entry[1] > 0)
+                .sort((a, b) => b[1] - a[1]);
+
+              const firstStyle = sortedStyles[0] ? sortedStyles[0][0] : "-";
+              const secondStyle = sortedStyles[1] ? sortedStyles[1][0] : null;
+
+              let styleOutput = firstStyle;
+              if (secondStyle) styleOutput += `, then ${secondStyle}`;
+
+              const details = Object.entries(c.varkCounts)
+                .filter((entry) => entry[1] > 0)
+                .sort((a, b) => b[1] - a[1])
+                .map((entry) => `${entry[0]}: ${entry[1]}`)
+                .join(", ");
+
+              output += `Cluster ${idx + 1}: n = ${c.count}, mean GPA ≈ ${meanG.toFixed(2)}\n`;
+              output += `   Distribution: [ ${details} ]\n`;
+            });
             output += "\n";
           }
-        } else {
-          output += "【 CLUSTERING (EXPLORATORY) 】\n";
-          output +=
-            "Not enough students with both GPA and a valid dominant VARK style to run a meaningful clustering.\n\n";
+        }
+
+        //  6. KOLB CLUSTERING ANALYSIS (WITH 1st & 2nd DOMINANTS)
+        const kolbOrder = [
+          "Diverger",
+          "Assimilator",
+          "Converger",
+          "Accommodator",
+        ];
+        const kolbClusterSource = students
+          .filter((s) => s.meta.gpa != null && s.dominant.kolb)
+          .map((s) => ({
+            gpa: s.meta.gpa,
+            kolb: s.dominant.kolb,
+          }));
+
+        if (kolbClusterSource.length >= 4) {
+          const gListK = kolbClusterSource.map((d) => d.gpa);
+          const kNumList = kolbClusterSource.map((d) =>
+            kolbOrder.indexOf(d.kolb),
+          );
+
+          const gMeanK = ss.mean(gListK);
+          const kMeanK = ss.mean(kNumList);
+          const gStdK = ss.standardDeviation(gListK) || 1;
+          const kStdK = ss.standardDeviation(kNumList) || 1;
+
+          const normPointsK = kolbClusterSource.map((d, i) => ({
+            x: (d.gpa - gMeanK) / gStdK,
+            y: (kNumList[i] - kMeanK) / kStdK,
+          }));
+
+          const kCountK = Math.min(3, normPointsK.length);
+          const kmK = kMeans2D(normPointsK, kCountK);
+
+          if (kmK) {
+            const kolbClusters = Array.from({ length: kmK.k }, () => ({
+              count: 0,
+              gpaSum: 0,
+              kolbCounts: {
+                Diverger: 0,
+                Assimilator: 0,
+                Converger: 0,
+                Accommodator: 0,
+              },
+            }));
+
+            kmK.assignments.forEach((cIdx, i) => {
+              const c = kolbClusters[cIdx];
+              c.count++;
+              c.gpaSum += kolbClusterSource[i].gpa;
+              const label = kolbClusterSource[i].kolb;
+              if (label && c.kolbCounts[label] !== undefined) {
+                c.kolbCounts[label]++;
+              }
+            });
+
+            output += "【 MULTIVARIATE CLUSTERING: GPA & KOLB MODELS 】\n";
+            kolbClusters.forEach((c, idx) => {
+              if (c.count === 0) return;
+              const meanG = c.gpaSum / c.count;
+
+              const sortedK = Object.entries(c.kolbCounts)
+                .filter((entry) => entry[1] > 0)
+                .sort((a, b) => b[1] - a[1]);
+
+              const firstK = sortedK[0] ? sortedK[0][0] : "-";
+              const secondK = sortedK[1] ? sortedK[1][0] : null;
+
+              let kolbOutput = firstK;
+              if (secondK) kolbOutput += `, then ${secondK}`;
+
+              const detailsK = Object.entries(c.kolbCounts)
+                .filter((entry) => entry[1] > 0)
+                .sort((a, b) => b[1] - a[1])
+                .map((entry) => `${entry[0]}: ${entry[1]}`)
+                .join(", ");
+
+              output += `Cluster ${idx + 1}: n = ${c.count}, mean GPA ≈ ${meanG.toFixed(2)}\n`;
+              output += `   Distribution: [ ${detailsK} ]\n`;
+            });
+            output += "\n";
+          }
         }
 
         output += "=== END OF REPORT ===\n";
@@ -1422,9 +1605,7 @@
           );
       }
 
-      /* ---------------------------
-         Charts rendering
-      ----------------------------*/
+      // Charts rendering
       function renderAllCharts() {
         const vTotals = { V: 0, A: 0, R: 0, K: 0 };
         const kolbTypeCounts = {
@@ -1440,22 +1621,49 @@
               (k) => (vTotals[k] += s.scores.VARK[k] || 0),
             );
           if (s.dominant.kolb) {
-            kolbTypeCounts[s.dominant.kolb]++;
+            if (kolbTypeCounts.hasOwnProperty(s.dominant.kolb)) {
+              kolbTypeCounts[s.dominant.kolb]++;
+            }
           }
         });
 
+        const dominantCounts = { V: 0, A: 0, R: 0, K: 0, Multimodal: 0 };
+
+        students.forEach((s) => {
+          if (s.dominant && s.dominant.vark) {
+            dominantCounts[s.dominant.vark]++;
+          }
+        });
         // VARK bar
         const vb = document.getElementById("varkBar").getContext("2d");
         if (charts.varkBar) charts.varkBar.destroy();
         charts.varkBar = new Chart(vb, {
           type: "bar",
           data: {
-            labels: ["Visual", "Aural", "Read/Write", "Kinesthetic"],
+            labels: [
+              "Visual",
+              "Aural",
+              "Read/Write",
+              "Kinesthetic",
+              "Multimodal",
+            ],
             datasets: [
               {
-                label: "VARK distribution (total scores)",
-                data: [vTotals.V, vTotals.A, vTotals.R, vTotals.K],
-                backgroundColor: ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"],
+                label: "Students",
+                data: [
+                  dominantCounts.V,
+                  dominantCounts.A,
+                  dominantCounts.R,
+                  dominantCounts.K,
+                  dominantCounts.Multimodal,
+                ],
+                backgroundColor: [
+                  "#3b82f6",
+                  "#ef4444",
+                  "#10b981",
+                  "#f59e0b",
+                  "#a855f7",
+                ],
               },
             ],
           },
@@ -1463,7 +1671,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { display: true },
+              legend: { display: false },
               title: { display: true, text: "VARK Style Distribution" },
             },
           },
@@ -1478,31 +1686,35 @@
             labels: ["Diverger", "Assimilator", "Converger", "Accommodator"],
             datasets: [
               {
-                label: "KOLB type distribution (number of students)",
+                label: "Students",
                 data: [
                   kolbTypeCounts.Diverger,
                   kolbTypeCounts.Assimilator,
                   kolbTypeCounts.Converger,
                   kolbTypeCounts.Accommodator,
                 ],
-                backgroundColor: ["#8b5cf6", "#06b6d4", "#f59e0b", "#ef4444"],
+                backgroundColor: [
+                  "#8b5cf6",
+                  "#06b6d4",
+                  "#920303",
+                  "#A8547A",
+                  "#94a3b8",
+                ],
               },
             ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-          plugins: {
-              legend: { display: true },
+            plugins: {
+              legend: { display: false },
               title: { display: true, text: "KOLB Type Distribution" },
             },
           },
         });
       }
 
-      /* ---------------------------
-         Admin modal logic
-      ----------------------------*/
+      // Admin modal logic
       document.getElementById("btnAdmin").addEventListener("click", () => {
         document.getElementById("adminModal").classList.remove("hidden");
         document.getElementById("adminModal").classList.add("flex");
@@ -1575,9 +1787,7 @@
         document.getElementById(tabId).classList.remove("hidden");
       }
 
-      /* ---------------------------
-         Admin populators
-      ----------------------------*/
+      // Admin populators
       function populateAdminStudents() {
         const el = document.getElementById("adminStudents");
         if (!students.length) {
@@ -1603,13 +1813,10 @@
         students = students.filter((s) => s.id !== id);
         localStorage.setItem("students_v1", JSON.stringify(students));
 
-        // Update admin list
         populateAdminStudents();
-        // Keep main UI and charts in sync
         renderStudentsTable();
         renderAllCharts();
         computeQuickSummary();
-        // Refresh statistical panels without bothering the user with alerts
         runStatTests(false);
       }
 
@@ -1619,9 +1826,9 @@
           el.innerHTML = '<div class="muted">No students yet.</div>';
           return;
         }
-
+        const fixedOrder = ["V", "A", "R", "K", "Multimodal"];
         const totals = { V: 0, A: 0, R: 0, K: 0 };
-        const dom = { V: 0, A: 0, R: 0, K: 0 };
+        const dom = { V: 0, A: 0, R: 0, K: 0, Multimodal: 0 };
         students.forEach((s) => {
           if (s.scores && s.scores.VARK)
             Object.keys(totals).forEach(
@@ -1631,17 +1838,23 @@
             dom[s.dominant.vark] = (dom[s.dominant.vark] || 0) + 1;
         });
 
+        const total = students.length;
+        const classified = dom.V + dom.A + dom.R + dom.K + dom.Multimodal;
+        const getPercentage = (n) =>
+          classified > 0 ? ((n / classified) * 100).toFixed(1) : 0;
+
         let html = `<div class="card p-3">
                 <b>Total VARK Scores (all students)</b><br>
                 Visual: ${totals.V}<br>
                 Aural: ${totals.A}<br>
                 Read/Write: ${totals.R}<br>
-                Kinesthetic: ${totals.K}
+                Kinesthetic: ${totals.K}<br>
               </div>`;
 
         html += `<div class="card p-3">
                 <b>Dominant VARK Distribution (students)</b><br>
-                V: ${dom.V} | A: ${dom.A} | R: ${dom.R} | K: ${dom.K}
+                 Total Participation: <span class="font-bold"> ${total} </span> students<br>
+                V: ${dom.V} (${getPercentage(dom.V)}%) | A: ${dom.A} (${getPercentage(dom.A)}%) | R: ${dom.R} (${getPercentage(dom.R)}%) | K: ${dom.K} (${getPercentage(dom.K)}%) | Multimodal: ${dom.Multimodal} (${getPercentage(dom.Multimodal)}%)
               </div>`;
 
         html += `<div class="card p-3 col-span-2">
@@ -1654,13 +1867,20 @@
 
         html +=
           '<div class="card p-3 col-span-2"><b>Contingency Table (Course Type × Dominant VARK)</b><br>';
-        html += '<table class="min-w-full text-sm mt-2"><thead><tr><th>Course type</th>';
-        bVals.forEach((b) => (html += `<th>${b}</th>`));
+        html +=
+          '<table class="min-w-full text-sm mt-2"><thead><tr><th>Course type</th>';
+        const activeColumns = fixedOrder.filter((type) => bVals.includes(type));
+        activeColumns.forEach((b) => (html += `<th>${b}</th>`));
         html += "</tr></thead><tbody>";
         for (let i = 0; i < aVals.length; i++) {
           html += `<tr class="border-t"><td class="font-medium">${aVals[i]}</td>`;
-          for (let j = 0; j < bVals.length; j++)
-            html += `<td class="text-center">${table[i][j]}</td>`;
+
+          activeColumns.forEach((type) => {
+            const colIndex = bVals.indexOf(type);
+            const value = table[i][colIndex] || 0;
+            html += `<td class="text-center">${value}</td>`;
+          });
+
           html += "</tr>";
         }
         html += "</tbody></table></div>";
@@ -1688,13 +1908,25 @@
           }
         });
 
+        const totalStudents = students.length;
+        const classifiedCount =
+          typeCounts.Diverger +
+          typeCounts.Assimilator +
+          typeCounts.Converger +
+          typeCounts.Accommodator;
+
+        const undefinedStudentCount = totalStudents - classifiedCount;
+
         let html = `<div class="card p-3">
-                <b>KOLB Type Distribution</b><br>
-                Diverger: ${typeCounts.Diverger}<br>
-                Assimilator: ${typeCounts.Assimilator}<br>
-                Converger: ${typeCounts.Converger}<br>
-                Accommodator: ${typeCounts.Accommodator}
-              </div>`;
+    <b>KOLB Analysis Summary</b><br>
+    Total Participation: <span class="font-bold"> ${totalStudents} </span> students<br>
+     ${undefinedStudentCount > 0 ? `<span class="text-green-600 font-bold">${classifiedCount}</span> students in dominant styles, <span class="text-red-600 font-bold">${undefinedStudentCount}</span> students with undefined profile.` : ""}
+   <br>
+    Diverger: ${typeCounts.Diverger} (${((typeCounts.Diverger / totalStudents) * 100).toFixed(1)}%)<br>
+    Assimilator: ${typeCounts.Assimilator} (${((typeCounts.Assimilator / totalStudents) * 100).toFixed(1)}%)<br>
+    Converger: ${typeCounts.Converger} (${((typeCounts.Converger / totalStudents) * 100).toFixed(1)}%)<br>
+    Accommodator: ${typeCounts.Accommodator} (${((typeCounts.Accommodator / totalStudents) * 100).toFixed(1)}%)
+</div>`;
 
         if (anova) {
           html += `<div class="card p-3">
@@ -1725,9 +1957,8 @@
         el.innerHTML = html;
       }
 
-      /* ---------------------------
-          Import JSON
-        ----------------------------*/
+      //  Import JSON
+
       document.getElementById("importJSON").addEventListener("change", (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -1756,12 +1987,12 @@
         window.location.reload();
       });
 
-      /* ---------------------------
-         Export CSV / JSON
-      ----------------------------*/
+      // Export CSV / JSON
       document.getElementById("exportCSV").addEventListener("click", () => {
         if (!students.length) {
-          alert("No students. Please add at least one student before exporting CSV.");
+          alert(
+            "No students. Please add at least one student before exporting CSV.",
+          );
           return;
         }
         const header = [
@@ -1834,9 +2065,6 @@
         URL.revokeObjectURL(url);
       });
 
-      /* ---------------------------
-         Init
-      ----------------------------*/
       function init() {
         renderQuestions();
         renderStudentsTable();
