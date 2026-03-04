@@ -52,7 +52,6 @@ document.getElementById("exportCSV").addEventListener("click", () => {
     "kolbAC",
     "kolbAE",
     "kolbType",
-    "savedAt",
   ];
   const rows = students.map((s) => [
     s.meta.name,
@@ -71,7 +70,6 @@ document.getElementById("exportCSV").addEventListener("click", () => {
     s.scores.Kolb.AC,
     s.scores.Kolb.AE,
     s.dominant.kolb || "",
-    s.meta.savedAt,
   ]);
   let csv =
     header.join(",") +
@@ -90,7 +88,6 @@ document.getElementById("exportAll").addEventListener("click", () => {
   const payload = {
     students,
     questions: rawQuestions,
-    exportedAt: new Date().toISOString(),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",

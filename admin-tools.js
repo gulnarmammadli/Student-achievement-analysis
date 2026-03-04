@@ -23,16 +23,9 @@ document.getElementById("adminClose").addEventListener("click", () => {
   document.getElementById("adminPanel").classList.add("hidden");
 });
 document.getElementById("adminExport").addEventListener("click", () => {
-  const blob = new Blob(
-    [
-      JSON.stringify(
-        { students, rawQuestions, exportedAt: new Date().toISOString() },
-        null,
-        2,
-      ),
-    ],
-    { type: "application/json" },
-  );
+  const blob = new Blob([JSON.stringify({ students, rawQuestions }, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -77,15 +70,13 @@ function populateAdminStudents() {
     return;
   }
   let html =
-    '<table class="min-w-full text-sm"><thead><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Saved at</th><th>Delete</th></tr></thead><tbody>';
+    '<table class="min-w-full text-sm"><thead><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Delete</th></tr></thead><tbody>';
   students.forEach((s) => {
     html += `<tr class="border-t"><td>${s.meta.name}</td><td>${
       s.meta.gpa === null ? "-" : s.meta.gpa.toFixed(2)
     }</td><td>${s.dominant.vark || "-"}</td><td>${
       s.dominant.kolb || "-"
-    }</td><td class="tiny">${new Date(
-      s.meta.savedAt,
-    ).toLocaleString()}</td><td><button onclick="deleteAdminStudent('${s.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
+    }</td><td><button onclick="deleteAdminStudent('${s.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
   });
   html += "</tbody></table>";
   el.innerHTML = html;

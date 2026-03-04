@@ -35,7 +35,6 @@ function saveStudent() {
     courseType: document.getElementById("courseType").value || null,
     weeklyHours: Number(document.getElementById("weeklyHours").value) || null,
     learningResource: document.getElementById("learningResource").value || null,
-    savedAt: new Date().toISOString(),
   };
 
   const responses = {};
@@ -105,15 +104,13 @@ function renderStudentsTable() {
     return;
   }
   let html =
-    '<table class="min-w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th><th>Saved at</th></tr></thead><tbody>';
+    '<table class="min-w-full text-sm"><thead class="text-left text-xs text-slate-500"><tr><th>Name</th><th>GPA</th><th>VARK</th><th>KOLB</th></tr></thead><tbody>';
   students.forEach((s) => {
     html += `<tr class="border-t"><td class="py-2">${s.meta.name}</td><td>${
       s.meta.gpa === null ? "-" : s.meta.gpa.toFixed(2)
     }</td><td>${s.dominant.vark || "-"}</td><td>${
       s.dominant.kolb || "-"
-    }</td><td class="tiny">${new Date(
-      s.meta.savedAt,
-    ).toLocaleString()}</td></tr>`;
+    }</td></tr>`;
   });
   html += "</tbody></table>";
   el.innerHTML = html;
