@@ -132,6 +132,23 @@ function computeQuickSummary(showAlert = false) {
   const meanGPA = present.length ? ss.mean(present) : null;
   const medianGPA = present.length ? ss.median(present) : null;
   const stdGPA = present.length ? ss.standardDeviation(present) : null;
+  const minGPA = present.length ? Math.min(...present) : null;
+  const maxGPA = present.length ? Math.max(...present) : null;
+
+  const hours = students.map((s) =>
+    s.meta.weeklyHours === null || s.meta.weeklyHours === undefined
+      ? NaN
+      : s.meta.weeklyHours,
+  );
+  const presentHours = hours.filter((v) => !isNaN(v));
+  const missingHours = hours.filter((v) => isNaN(v)).length;
+  const meanHours = presentHours.length ? ss.mean(presentHours) : null;
+  const medianHours = presentHours.length ? ss.median(presentHours) : null;
+  const stdHours = presentHours.length
+    ? ss.standardDeviation(presentHours)
+    : null;
+  const minHours = presentHours.length ? Math.min(...presentHours) : null;
+  const maxHours = presentHours.length ? Math.max(...presentHours) : null;
 
   const vTotals = { V: 0, A: 0, R: 0, K: 0 };
   const kolbTypeCounts = {
@@ -154,6 +171,14 @@ function computeQuickSummary(showAlert = false) {
       Mean GPA: ${meanGPA ? meanGPA.toFixed(2) : "-"}
       Median GPA: ${medianGPA ? medianGPA.toFixed(2) : "-"}
       Std GPA: ${stdGPA ? stdGPA.toFixed(2) : "-"}
+      Min/Max GPA: ${minGPA !== null ? minGPA : "-"}/${maxGPA !== null ? maxGPA : "-"}
+
+      Missing Hours: ${missingHours}
+      Mean Hours: ${meanHours ? meanHours.toFixed(2) : "-"}
+      Median Hours: ${medianHours ? medianHours.toFixed(2) : "-"}
+      Std Hours: ${stdHours ? stdHours.toFixed(2) : "-"}
+      Min/Max Hours: ${minHours !== null ? minHours : "-"}/${maxHours !== null ? maxHours : "-"}
+
       VARK totals: V=${vTotals.V}, A=${vTotals.A}, R=${vTotals.R}, K=${vTotals.K}
       KOLB types: Div=${kolbTypeCounts.Diverger}, Assim=${
         kolbTypeCounts.Assimilator

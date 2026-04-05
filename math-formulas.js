@@ -50,6 +50,7 @@ function chiSquarePValue(chi2, dof) {
     for (let j = 0; j < 6; j++) ser += cof[j] / ++y;
     return -tmp + Math.log((2.5066282746310005 * ser) / x);
   }
+
   function incompletaGamma(a, x) {
     if (x < 0 || a <= 0) return 0;
     if (x === 0) return 0;

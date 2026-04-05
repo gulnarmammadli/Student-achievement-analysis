@@ -79,7 +79,7 @@ function renderAllCharts() {
               );
               let percentage = ((value / total) * 100).toFixed(1);
 
-              return `${label}: ${value} tələbə (${percentage}%)`;
+              return `${label}: ${value} students (${percentage}%)`;
             },
           },
         },
@@ -131,7 +131,7 @@ function renderAllCharts() {
               );
               let percentage = ((value / total) * 100).toFixed(1);
 
-              return `${label}: ${value} tələbə (${percentage}%)`;
+              return `${label}: ${value} students (${percentage}%)`;
             },
           },
         },

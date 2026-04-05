@@ -183,6 +183,7 @@ function runStatTests(showAlert = false) {
   if (gpasForKolb.length >= 3) {
     // 2.2 AC–CE Axis Analysis
     const rAcCe = pearson(acMinusCE, gpasForKolb);
+    const rhoAcCe = spearman(acMinusCE, gpasForKolb);
     const absRAcCe = Math.abs(rAcCe);
     let interpAcCe =
       absRAcCe < 0.1
@@ -194,11 +195,12 @@ function runStatTests(showAlert = false) {
           }`;
 
     output += `2.2 Correlation (KOLB AC–CE Axis × GPA)\n`;
-    output += `    n = ${gpasForKolb.length} | Pearson r = ${rAcCe.toFixed(4)}\n`;
+    output += `    n = ${gpasForKolb.length} | Pearson r = ${rAcCe.toFixed(4)}, Spearman ρ = ${rhoAcCe.toFixed(4)}\n`;
     output += `    Analysis Note: ${interpAcCe}\n\n`;
 
     // 2.3 AE–RO Axis Analysis
     const rAeRo = pearson(aeMinusRO, gpasForKolb);
+    const rhoAeRo = spearman(aeMinusRO, gpasForKolb);
     const absRAeRo = Math.abs(rAeRo);
     let interpAeRo =
       absRAeRo < 0.1
@@ -210,7 +212,7 @@ function runStatTests(showAlert = false) {
           }`;
 
     output += `2.3 Correlation (KOLB AE–RO Axis × GPA)\n`;
-    output += `    n = ${gpasForKolb.length} | Pearson r = ${rAeRo.toFixed(4)}\n`;
+    output += `    n = ${gpasForKolb.length} | Pearson r = ${rAeRo.toFixed(4)}, Spearman ρ = ${rhoAeRo.toFixed(4)}\n`;
     output += `    Analysis Note: ${interpAeRo}\n\n`;
   } else {
     output += `2.2 & 2.3 KOLB Axes Analysis\n`;
