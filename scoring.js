@@ -171,13 +171,11 @@ function computeQuickSummary(showAlert = false) {
       Mean GPA: ${meanGPA ? meanGPA.toFixed(2) : "-"}
       Median GPA: ${medianGPA ? medianGPA.toFixed(2) : "-"}
       Std GPA: ${stdGPA ? stdGPA.toFixed(2) : "-"}
-      Min/Max GPA: ${minGPA !== null ? minGPA : "-"}/${maxGPA !== null ? maxGPA : "-"}
 
       Missing Hours: ${missingHours}
       Mean Hours: ${meanHours ? meanHours.toFixed(2) : "-"}
       Median Hours: ${medianHours ? medianHours.toFixed(2) : "-"}
       Std Hours: ${stdHours ? stdHours.toFixed(2) : "-"}
-      Min/Max Hours: ${minHours !== null ? minHours : "-"}/${maxHours !== null ? maxHours : "-"}
 
       VARK totals: V=${vTotals.V}, A=${vTotals.A}, R=${vTotals.R}, K=${vTotals.K}
       KOLB types: Div=${kolbTypeCounts.Diverger}, Assim=${
