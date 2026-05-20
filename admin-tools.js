@@ -117,7 +117,7 @@ function populateAdminVarkDetails(chi, table, aVals, bVals) {
   let html = `<div class="card p-3">
                 <b>Total VARK Scores (all students)</b><br>
                 Visual: ${totals.V}<br>
-                Aural: ${totals.A}<br>
+                Auditory: ${totals.A}<br>
                 Read/Write: ${totals.R}<br>
                 Kinesthetic: ${totals.K}<br>
               </div>`;

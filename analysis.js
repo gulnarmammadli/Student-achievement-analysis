@@ -99,7 +99,7 @@ function runStatTests(showAlert = false) {
 
     const varkStyles = [
       { key: "V", label: "Visual" },
-      { key: "A", label: "Aural" },
+      { key: "A", label: "Auditory" },
       { key: "R", label: "Read/Write" },
       { key: "K", label: "Kinesthetic" },
     ];

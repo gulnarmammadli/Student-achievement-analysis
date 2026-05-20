@@ -34,7 +34,7 @@ function renderAllCharts() {
   charts.varkBar = new Chart(vb, {
     type: "pie",
     data: {
-      labels: ["Visual", "Aural", "Read/Write", "Kinesthetic", "Multimodal"],
+      labels: ["Visual", "Auditory", "Read/Write", "Kinesthetic", "Multimodal"],
       datasets: [
         {
           label: "Students",

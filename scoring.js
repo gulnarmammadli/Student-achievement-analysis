@@ -215,7 +215,7 @@ function computeQuickSummary(showAlert = false) {
 
     const styleFullNames = {
       V: "Visual",
-      A: "Aural",
+      A: "Auditory",
       R: "Read/Write",
       K: "Kinesthetic",
     };
